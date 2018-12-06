@@ -67,15 +67,12 @@ class MariadbHelper(object):
                         cursor.close()
 
 if __name__ == '__main__':
-        url = 'localhost'
-        user = 'root'
-        pwd = 'zxc12345'
-        database = 'EISP_PERS'
-        #mh = MariadbHelper(url, user, pwd, database)
+    
         mh = MariadbHelper()
         data = mh.exec_sql_cmd("""
                 select * from punch_info;
 """)
+
         print("TestResult: ", data)
-        
         pass
+        
