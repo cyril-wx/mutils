@@ -33,8 +33,8 @@ def readCSVFile(filePath):
 # 写入csv文件（obj.dict）
 def writeCSVFile(filePath, _2DList):
 	if(os.path.exists(filePath)):
-#		csvfile = open(filePath, 'ab', newline='') # newline='' 为python3
-		csvfile = open(filePath, 'ab')
+#		csvfile = open(filePath, 'a', newline='') # newline='' 为python3
+		csvfile = open(filePath, 'a')
 		writer_ = csv.writer(csvfile, dialect='excel')
 		if isinstance(_2DList, (list)):
 			try:
@@ -43,6 +43,7 @@ def writeCSVFile(filePath, _2DList):
 				print ("writeCSVFile -> Writing successful.")
 			except Exception as e:
 				print ("writeCSVFile -> Error data type")
+				print("TEST -> ",e)
 		else:
 			print ("writeCSVFile -> Error data type")
 		pass
@@ -52,9 +53,10 @@ def writeCSVFile(filePath, _2DList):
 			cmd = 'cd '+ dirname + ' ; touch ' + filename + ' ;'
 			os.system(cmd)
 			writeCSVFile(filePath, _2DList)
+			return True
 		else:
 			print("writeCSVFile -> Current path no access to create files.")
-		print("writeCSVFile -> ", filePath, " is not exists.")
+			return False
 
 if "__main__" == __name__:
 	dirname, filename = os.path.split(os.path.abspath(sys.argv[0])) 
@@ -69,3 +71,4 @@ if "__main__" == __name__:
 	data.append(['5', 'e', '333'])
 	writeCSVFile(filePath, _2DList=data)
 	readCSVFile(filePath)
+
