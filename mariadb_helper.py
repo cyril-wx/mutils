@@ -42,13 +42,10 @@ class MariadbHelper(object):
                         a = a[0:-1]
                 else:
                         a = "*"
-
                 if not table_name:  # 如果table_name为空, 则直接中断返回
                         return -1
-
                 sql_cmd = "select " + a + " from " + table_name
-                print("sql_select -> sql_cmd = ", sql_cmd)
-
+                #print("sql_select -> sql_cmd = ", sql_cmd)
                 exec_sql_cmd(sql_cmd)
 
                 return data
@@ -69,7 +66,6 @@ class MariadbHelper(object):
                 finally:
                         cursor.close()
 
-
 if __name__ == '__main__':
         url = 'localhost'
         user = 'root'
@@ -81,5 +77,5 @@ if __name__ == '__main__':
                 select * from punch_info;
 """)
         print("TestResult: ", data)
-
+        
         pass
