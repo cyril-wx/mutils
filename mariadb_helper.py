@@ -112,4 +112,7 @@ if __name__ == '__main__':
         time_end = datetime.now()
         print("Total Time(s): ", (time_end-time_begin).seconds)
         
-        #树莓派写入50w+ 数据花费 2346s
+        #树莓派
+        #使用以上方式写入50w+ 数据花费 2346s
+        #使用以上方式写入1w 数据花费 44s
+        #直接导入sql写入1w 数据花费 28s
