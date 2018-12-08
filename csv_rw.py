@@ -20,7 +20,7 @@ def print2DList(_2DList):
 def readCSVFile(filePath):
 	if(os.path.exists(filePath)):
 		mdata=[]
-		with open(filePath, 'rb') as f:
+		with open(filePath, 'r') as f:
 			lines = csv.reader(f)	
 			for line in lines:
 				mdata.append(line)
