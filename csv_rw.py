@@ -20,8 +20,8 @@ def print2DList(_2DList):
 def readCSVFile(filePath):
 	if(os.path.exists(filePath)):
 		mdata=[]
-		with open(filePath, 'r') as f:
-			lines = csv.reader(f)	
+		with open(filePath, 'r', newline='', encoding="UTF-8-sig") as f:
+			lines = csv.reader(f, dialect='excel')
 			for line in lines:
 				mdata.append(line)
 	else:
@@ -33,8 +33,8 @@ def readCSVFile(filePath):
 # 写入csv文件（obj.dict）
 def writeCSVFile(filePath, _2DList):
 	if(os.path.exists(filePath)):
-#		csvfile = open(filePath, 'a', newline='') # newline='' 为python3
-		csvfile = open(filePath, 'a')
+		csvfile = open(filePath, 'a', newline='', encoding="UTF-8") # newline='' 为python3
+#		csvfile = open(filePath, 'a')
 		writer_ = csv.writer(csvfile, dialect='excel')
 		if isinstance(_2DList, (list)):
 			try:
@@ -59,8 +59,9 @@ def writeCSVFile(filePath, _2DList):
 			return False
 
 if "__main__" == __name__:
-	dirname, filename = os.path.split(os.path.abspath(sys.argv[0])) 
-	filePath = dirname+"/csvData.csv"
+	dirname, filename = os.path.split(os.path.abspath(sys.argv[0]))
+	#filePath = dirname+"/csvData.csv"
+	filePath = './eisp_pers_punch_info.csv'
 	print("filePath : ", filePath)
 
 	data=[]
@@ -69,6 +70,6 @@ if "__main__" == __name__:
 	data.append(['3', 'c', '133'])
 	data.append(['4', 'd', '321'])
 	data.append(['5', 'e', '333'])
-	writeCSVFile(filePath, _2DList=data)
+	#writeCSVFile(filePath, _2DList=data)
 	readCSVFile(filePath)
 
