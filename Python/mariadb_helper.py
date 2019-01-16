@@ -12,7 +12,7 @@ class MariadbHelper(object):
                 'host':'127.0.0.1',
                 'port':3306,    ## MySQL默认端口
                 'user':'root',  ## mysql默认用户名
-                'password':'zxc12345',
+                'password':'<PASSWORD>',
                 'db':'EISP_PERS',       ## 数据库
                 'charset':'utf8', }     ## 如果不设置字符集则会导致输出中文乱码
         # 初始化db连接
@@ -80,7 +80,7 @@ if __name__ == '__main__':
                 'host':'127.0.0.1',
                 'port':3306,    ## MySQL默认端口
                 'user':'root',  ## mysql默认用户名
-                'password':'zxc12345',
+                'password':'<PASSWORD>',
                 'db':'EISP_PERS',       ## 数据库
                 'charset':'utf8', }     ## 如果不设置字符集则会导致输出中文乱码
 
