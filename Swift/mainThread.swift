@@ -39,6 +39,9 @@ func mainThread(){
                     sleep(10)
             }
         }
+        print("Waitting all test done.")
+        group.wait()    // 等待所有子线程完成
+        print("All test done.")
     }
     
     // 通知主线程刷新UI, 有需要在主线程中执行的代码，请添加到此
