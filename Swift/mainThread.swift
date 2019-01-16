@@ -33,10 +33,10 @@ func mainThread(){
                 DispatchQueue.main.async(group: group, execute: refreshMainUI(dq: item))     // 通知主线程刷新UI
                 group.leave()   //执行完之后从组队列中移除
             }
-            group.notify(queue: item){ // 对应的子线程完成后，通知主线程刷新UI
-                print("\(item.label) finished，request UI refresh again")
-                
-                // *** 此处可添加 UI 刷新任务
+            group.notify(queue: item){ // 对应的子线程完成后，扫尾任务
+                    print("\(item.label) finished，do something more")
+                    // *** 此处可添加 对应的子线程完成后的扫尾任务
+                    sleep(10)
             }
         }
     }
@@ -46,7 +46,7 @@ func mainThread(){
         let workItem = DispatchWorkItem {
             print("Refresh main UI: \(dq.label): Hello world! ")
             // *** 此处可添加 UI 刷新任务
-            Thread.sleep(forTimeInterval: 5)   //停止1秒
+          //  Thread.sleep(forTimeInterval: 5)   //停止1秒
         }
         return workItem
     }
