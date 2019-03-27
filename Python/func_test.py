@@ -19,3 +19,9 @@ if __name__ == "__main__":
 		args = sys.argv[2:]
 		
 	func(*args)
+
+
+'''
+$ python func_test.py func_1 hello world
+func_1: a=hello, b=world
+'''
