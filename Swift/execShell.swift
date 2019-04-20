@@ -1,4 +1,8 @@
 //: Playground - noun: a place where people can play
+// execShellCMD方式调用已弃用，原因：
+//    1，pipe未关闭可能导致内存泄露
+//    2，任意参数无意义
+
 
 import Cocoa
 import UIKit
