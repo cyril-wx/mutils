@@ -75,9 +75,88 @@ def main():
         else:
             print ("Start increase backup.")
             incrBackup()
+            
+import os
+import shutil
+import sys
+import logging
+
+# 同步文件夹
+class SynDirTool:
+    def __init__(self, fromdir, todir):
+        self.fromdir = fromdir
+        self.todir = todir
+
+    def synDir(self):
+        return self.__copyDir(self.fromdir, self.todir)
+
+    def __copyDir(self, fromdir, todir):
+        # 防止该目录不存在，创建目录
+        self.__mkdir(todir)
+        count = 0
+        for filename in os.listdir(fromdir):
+            if filename.startswith('.'):
+                continue
+            fromfile = fromdir + os.sep + filename
+            tofile = todir + os.sep + filename
+            if os.path.isdir(fromfile):
+                count += self.__copyDir(fromfile, tofile)
+            else:
+                count += self.__copyFile(fromfile, tofile)
+        return count
+
+    def __copyFile(self, fromfile, tofile):
+        if not os.path.exists(tofile):
+            shutil.copy2(fromfile, tofile)
+            logging.info("新增%s ==> %s" % (fromfile, tofile))
+            return 1
+        fromstat = os.stat(fromfile)
+        tostat = os.stat(tofile)
+        if fromstat.st_ctime > tostat.st_ctime:
+            shutil.copy2(fromfile, tofile)
+            logging.info("更新%s ==> %s" % (fromfile, tofile))
+            return 1
+        return 0
+
+    def __mkdir(self, path):
+        # 去除首位空格
+        path = path.strip()
+        # 去除尾部 \ 符号 或者 /
+        path = path.rstrip(os.sep)
+
+        # 判断路径是否存在
+        isExists = os.path.exists(path)
+
+        # 判断结果
+        if not isExists:
+            # 如果不存在则创建目录
+            logging.info(path + ' 目录创建成功')
+            # 创建目录操作函数
+            os.makedirs(path)
+
+# 同步文件夹——测试
+def test_SynDirTool():
+    count = 0
+    
+    basedir = "/Users/gdlocal1/Desktop/Cyril/TMP"
+    sync_file = "panic_report.csv"
+    #src_list = ["src_1", "src_2", "src_3", "src_4", "src_5"]
+    src_list = ["src_1", "src_2", "src_3", "src_4", "src_5"]
+    current_src = src_list[1]
+
+    for i in src_list:
+        if not i == current_src:
+            source = basedir+"/"+current_src+"/"
+            target = basedir+"/"+i+"/"
+            logging.basicConfig(filename='SynDirTool.log', level=logging.INFO)
+            tool = SynDirTool(source, target)
+            count += tool.synDir()
+    #srcdir = sys.argv[1]
+    #descdir = sys.argv[2]
+    
+            
 
 if __name__ == '__main__':
-    #main()
-    print ("Start increase backup.")
-    incrBackup()
+    main()
+    #test_SynDirTool()
 
