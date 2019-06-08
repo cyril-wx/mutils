@@ -1,283 +1,195 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding:UTF-8 -*-
+#**********************************************	#
+# Master and Slave Handshake Protocal 			#
+# AutoPanic主从服务器通信协议	                #
+#----------------------------------------------	#
+# @Author: Cyril								#
+# @Mail: 848873227@qq.com                       #
+# @Create: 2019-06-08							#
+# @Tips: 			                            #
+#**********************************************	#
 
+from jc import utils as jcu
 import os
+import re
 import sys
 
 class IP_Pool:
-    """
-    # 在配置文件中，逐行填入所有IP即可激活IP_Pool
-    """
-    sys_ver = ""
-    conf_path = ""
-    def __init__(self, conf_path):
-        self.sys_ver = sys.version
-        if os.path.exists(conf_path):
-            self.conf_path = conf_path
-        else:
-            exit(1)
+	ip_pool = []    # 二维数组
+	conf_path = "/tmp/autopanic_ips_stats.csv"
+	origin_data=[
+		["Station", "IP", "Stats", "role"],
+		["s1", "172.21.156.46", "Online", "master"],
+		["s2", "172.21.204.237", "Online", "slave"],
+		["s3", "172.21.204.238", "Online", "slave"],
+		["s4", "172.21.204.239", "Online", "slave"],
+	]
 
-    def resolveData(self):
-        """
-        # 获取所有的IP及状态
-        :return: list(tuple(ip_tuple_list)) or None
-        """
-        ip_tuple_list = []
-        with open(self.conf_path, "r") as f:
-            line = f.readline()
-            while line:
-                ip_tuple_list.append(line.strip().rstrip("\n").split(" "))
-                line = f.readline()
-            return  ip_tuple_list
-        return None
+	def __init__(self, conf_path=conf_path, remotePool=False):
+		self.sys_ver = sys.version
+		self.ip_pool=jcu.readCSVFile(conf_path)
+		if self.ip_pool and len(self.ip_pool) > 0:
+			#print("Init failed. Make a new config-%s" %conf_path)
+			#jcu.writeCSVFile(conf_path, self.origin_data)
+			self.ip_pool.remove(self.ip_pool[0])
 
-    def getIPStats(self, IP):
-        """
-        # 获取IP的状态值
-        :param IP: IP string.
-        :return: str(stats) or None
-        """
-        import re
-        if not re.match("\d+.\d+.\d+.\d+", IP):
-            print("'IP' is invalid type.")
-            exit(1)
-        data = self.resolveData()
-        if data:
-            for item in data:
-                if IP == item[0]:
-                    cmd = "ping 172.21.157.72 -c1"
-                    (rev,res) = readCMD([cmd], True)
-                    if rev == 0:
-                        return item[1]
-        return None
-
-    def setIPStats(self, IP, Stats):
-        """
-        # Add/Update IPStats to local IP_Pool
-        # 请勿直接调用此方法
-        :param IP:
-        :param Stats:
-        :return: True/False
-        """
-        import copy
-        data = self.resolveData()
-        if data:
-            for item in data:
-                if item[0] == IP :
-                    print("Found IP: %s" %IP)
-                    item[1] = Stats
-                    return self.rewriteConfig(data)
-        else:
-            print("No data in config file.")
-        return False
-
-    def syncIPStats(self, file=conf_path, sync_rule="NEW_ADD",*args):
-        """
-        # 同步指定文件到指定所有工站 (采用强制同步)
-        :param file: 指定待同步的所有文件
-        :param sync_rule: 同步规则：NEW_ADD/NEW_OVERRIDE: 不检测值更新/检测是否需要更新值
-        :param args: IPs(list)
-        :return: success IPs(list)
-        """
-        #for ip in args:
-        #    if ip ==
+		if os.path.exists(conf_path) and remotePool:
+			conf_parent_path = os.path.split()[0]
+			pass
 
 
-        pass
+	def run_IP_Pool(self):
+		pass
 
-    def rewriteConfig(self, data):
-        """
-        # 将修改后的数据写入配置文件
-        :param data:
-        :return: true/false
-        """
-        with open(self.conf_path, "w") as f:
+	def setIPStats(self, IP, Stats="Online"):
+		"""
+		# Add/Update IPStats to local IP_Pool
+		# 请勿直接调用此方法
+		:param IP:
+		:param Stats: Online/Offline (str)
+		:return: True/False
+		"""
+		print (self.ip_pool)
 
-            if isinstance(data, str):   ## 源数据类型为 str
-                f.write(data)
-            elif isinstance(data, list) or isinstance(data, set): ## 源数据类型为 [["", ""], ]
-                for line in data:
-                    try:
-                        f.write(" ".join(line)+"\n")
-                    except:             ## 写入失败 将源数据类型强制转换为为 str 并写入
-                        print("Writing data as list type failed and forcing writing as str.")
-                        f.write(str(line)+"\n")
-            else:                       ## 将源数据类型强制转换为为 str 并写入
-                print("Unkown data type and writing as str.")
-                f.write(str(data)+"\n")
-            return True
+	def fullSync(self, remoteIP, syncFileOrDir, reverse=False, remoteUser="gdlocal", remotePWD="gdlocal"):
+		"""
+		# Full synchronization
+		# 两个工站进行全量同步 （其中一个是本机）
+		:param remoteIP: 远程工站IP需手动指定
+		:param syncFileOrDir: 要同步的文件或文件夹
+		:param reverse: 是否反向同步 True/False
+						# False: 正向同步，覆盖远程文件
+						# True: 反向同步，即下载远程文件到本地临时文件
+		:param remoteUser: 被同步文件工站用户名
+		:param remoteUser: 被同步文件工站用户密码
+		:return: True/False
+		"""
+		if not re.match("\d+.\d+.\d+.\d+", remoteIP):
+			print("'IP' is invalid type.")
+			exit(1)
 
-    def getLocalHostIP(self):
-        """
-        # 获取本机 IP
-        :return: IP(str)
-        """
-        cmd = "/sbin/ifconfig -a|grep inet|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d \"addr:\" | sed -n 1p"
-        IP = None
-        try:
-            IP = readCMD([cmd], True)[1][0]
-        except Exception as e:
-            print(e)
-        finally:
-            return IP
+		(dir, filename) = os.path.split(syncFileOrDir)
+		## -u 不同步旧版本
+		if reverse:
+			sync_cmd = "/usr/bin/rsync -avu %s@%s://%s %s" %( remoteUser, remoteIP, syncFileOrDir, dir)
+		else:
+			sync_cmd = "/usr/bin/rsync -avu %s %s@%s://%s" % (syncFileOrDir, remoteUser, remoteIP, dir)
 
-    def syncConfigOn2Stations(self, remoteIP, syncFileOrDir=conf_path):
-        """
-        # rsync同步。只适用于同步更新固定key。
-        :param remoteIP:
-        :param syncFileOrDir: 要同步的文件或文件夹
-        :return: True/False
-        """
-        import re, os
-        if not re.match("\d+.\d+.\d+.\d+", remoteIP):
-            print("'IP' is invalid type.")
-            exit(1)
-
-        (dir, filename) = os.path.split(syncFileOrDir)
-        ## -u 不同步旧版本
-        sync_cmd = """
-expect << EOF
-set timeout 10
-spawn /usr/bin/rsync -avu %s/%s gdlocal@%s:%s
-expect {
-	-re "Password:" { send "gdlocal\r"; exp_continue }
-	-re "total size is" { exit 0}
-    timeout {
-        send_user "Timeout...exit.\r" ;
-        exit 1
-    }
-	eof {
-		send_user "EOF finish.\r" ;
-		exit 2
+		cmd = """
+	expect << EOF
+	set timeout 3
+	spawn %s
+	expect {
+	        -re "Password:" { send "%s\r"; exp_continue }
+	        -re "total size is" { exit 0}
+	    timeout {
+	        send_user "Timeout...exit.\r" ;
+	        exit 1
+	    }
+	        eof {
+	                send_user "EOF finish.\r" ;
+	                exit 2
+	        }
 	}
-}
-EOF
-        """ %(dir, filename, remoteIP, dir)
+	EOF
+	        """ %(sync_cmd, remotePWD)
+		#% (dir, filename, remoteIP, dir)
+		(res, rev) = jcu.readCMD(cmd, True)
+		#print("syncConfigOn2Stations (res, rev) -> %s" %str((res,rev)))
+		if res == 0:
+			return True
+		return False
 
-        res = 1
-        count = 0
-        while count < 3:
-            (res, rev) = readCMD(sync_cmd, True)
-            if not res:
-                return False
-            count+=1
-        return True
+	def increSync(self, remoteIP, syncFileOrDir, reverse=False, remoteUser="gdlocal", remotePWD="gdlocal"):
+		"""
+		# Incremental synchronization
+		# 两个工站进行增量同步 （其中一个是本机）
+		# Tips: 适用于单文件单增量同步，传入单syncFileOrDir若是文件夹则可能失败
+		:param remoteIP: 远程工站IP需手动指定
+		:param syncFileOrDir: 要同步的文件或文件夹
+		:param reverse: 是否反向同步 True/False
+		:param remoteUser: 被同步文件工站用户名
+		:param remoteUser: 被同步文件工站用户密码
+		:return: True/False
+		"""
+		if not os.path.isfile(syncFileOrDir):
+			print("'syncFileOrDir' should be a exist file path.")
+			return False
 
-    def mergeLists(self, *args):
-        """
-        # merge all list data.
-        :param data_1:
-        :param data_2:
-        :return:
-        """
-        merged_list = set()
-        for item in args:
-            for i_list in item:
-                try:
-                    merged_list.add(i_list)
-                except Exception as e:
-                    print("item-%s added failed." %str(i_list))
-                    print(e)
-                    continue
-        return merged_list
+		# 反向同步，即下载远程文件到本地
+		if not self.fullSync(remoteIP, syncFileOrDir+".1", True, remoteUser, remotePWD):
+			print("Get remote file failed. [IP:%s]" %remoteIP)
+			return False
 
-    def mergeUpdate2Data(self):
-        pass
+		remote_data = jcu.readCSVFile(syncFileOrDir+".1")
+		local_data = jcu.readCSVFile(syncFileOrDir)
+		## 将本地数据与远程数据对比合并重复项，并写入新数据
+		if remote_data and local_data and remote_data == local_data:
+			## 如果数据对比相同则不写入新数据和远程同步
+			return True
+		else:
+			new_data = self.mergeLists(remote_data, local_data)
+			# 清空原数据表
+			with open(syncFileOrDir, "w") as f:
+				f.write("")
+			jcu.writeCSVFile(syncFileOrDir, new_data)
+			if self.fullSync(remoteIP, syncFileOrDir, False, remoteUser, remotePWD):
+				return True
+		return False
+		#remote_data =
 
-    def fileDataCompare(self, f_1, f_2):
-        """
-        # 文件内容对比(仅限文本文档)
-        :param f_1:
-        :param f_2:
-        :return:  True/False
-        """
-        #import hashlib
-        a = None
-        b = None
-        try:
-            f_a = open(f_1, "r")
-            f_b = open(f_2, "r")
+	def mergeLists(self, *args):
+		"""
+		# 合并所有的list，自动去除相同项
+		:param data_1:
+		:param data_2:
+		:return: merged list (set)
+		"""
+		if not args:
+			return []
+		merged_list = set()
+		for item in args:
+			for i_list in item:
+				try:
+					merged_list.add(tuple(i_list))
+				except Exception as e:
+					print("item-%s added failed." % str(i_list))
+					print(e)
+					continue
 
-            while True:
-                a = f_a.readline()
-                b = f_b.readline()
-                if not a and not b:
-                    break
-#                elif a.strip() == "" or b.strip() == "":       # 这里的作用就是检测文末是否存在空行，但影响执行效率
-#                    continue
-                elif a != b:
-                    return False
+		return sorted(merged_list, key=lambda x: x[0], reverse=False)
 
-        except Exception as e:
-            print("Can't open file_1-%s or file_2-%s" %(f_1, f_2))
-            print(e)
-            return False
-        finally:
-            if f_a:
-                f_a.close()
-            if f_b:
-                f_b.close()
-        return True
+def main():
+	"""
+	## Python的入口开始
+	:return:
+	"""
+	module = sys.modules[__name__]
+	# getattr() 函数用于返回一个对象属性值。
+	# sys.argv 是获取运行python文件的时候命令行参数,且以list形式存储参数
+	# sys.argv[0] 代表当前module的名字
+	try:
+		func = getattr(module, sys.argv[1])
+	except Exception as e:
+		print(e)
+	else:
+		args = None
+		if len(sys.argv) > 1:
+			args = sys.argv[2:]
+			#print("DEBUG: args = %s" %args)
+			func(*args)
 
-
-def readCMD(args=[], isShell=True):
-    '''
-    #Running the command and read String from stdout.
-    #@param args(list): cmd script path & cmd params
-    #@param isShell(Bool): The cmd is shell cmd or not.
-    #@param timeout(int): set timeout(must > 0), default -1 means never timeout
-    #@return (res, rev): res: result status code
-    #                   rev: result string
-    '''
-    import subprocess
-    from subprocess import Popen
-
-    res = False
-    rev = []
-    p = subprocess.Popen(args, shell=isShell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    while True:
-        if sys.version > "3":  ## python3 +
-            buff = p.stdout.readline().decode(encoding="UTF-8").strip().replace("\r\n", "")
-        else:                   ## python2 +
-            buff = p.stdout.readline().strip().replace("\r\n", "")
-
-        if p.poll() != None:
-            if buff == '':
-                break;
-        if buff != '':
-            buff.strip().replace("\n", "")
-            rev.append(buff)
-            # print(buff)
-#    if p.wait() == 0:
-#        res = True
-
-    return (p.wait(), rev)  ## res(Bool): The cmd is running successful?
-                        ## rev(String): The cmd result string.
 
 if __name__ == "__main__":
+	ipp = IP_Pool()
+	#print (ipp.ip_pool)
+	print("==>")
+	#print (ipp.fullSync("172.21.204.238", "/tmp/autopanic_ips_stats.csv"))
+	print(ipp.increSync("172.21.204.238", "/tmp/autopanic_ips_stats.csv", reverse=False, remoteUser="gdlocal", remotePWD="gdlocal"))
+	pass
 
 
 
-    import time
-    from IP_Pool import IP_Pool
-    config_path = "/Users/gdlocal1/test.txt"
-    test = IP_Pool(config_path)
-
-    print(test.getLocalHostIP())
-
-
-    l_a = [1,2,3,4,5,6,]
-    l_b = [2,9,8,21,6,17]
-    l_c = [7,3,0,4,43,69]
-    res = test.mergeLists(l_a,l_b,l_c)
-    print(type(res))
-
-    test.rewriteConfig(res)
-
-    exit(0)
-
-    print(test.resolveData())
-    print(test.setIPStats("192.168.191.2", "Online"))
-    print(test.resolveData())
-
+else:
+	main()
