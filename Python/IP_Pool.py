@@ -18,6 +18,7 @@ import sys
 class IP_Pool:
 	ip_pool = []    # 二维数组
 	conf_path = "/tmp/autopanic_ips_stats.csv"
+	tmp_csv_file = "/tmp/1.csv"
 	origin_data=[
 		["Station", "IP", "Stats", "role"],
 		["s1", "172.21.156.46", "Online", "master"],
@@ -55,12 +56,12 @@ class IP_Pool:
 	def fullSync(self, remoteIP, syncFileOrDir, reverse=False, remoteUser="gdlocal", remotePWD="gdlocal"):
 		"""
 		# Full synchronization
-		# 两个工站进行全量同步 （其中一个是本机）
+		# 两个工站进行全量同步 (旧版本不会覆盖新版本文件)
 		:param remoteIP: 远程工站IP需手动指定
 		:param syncFileOrDir: 要同步的文件或文件夹
 		:param reverse: 是否反向同步 True/False
-						# False: 正向同步，覆盖远程文件
-						# True: 反向同步，即下载远程文件到本地临时文件
+						# False: 正向同步，直接覆盖远程文件
+						# True: 反向同步，即下载远程文件到本地临时文件/tmp/1.csv
 		:param remoteUser: 被同步文件工站用户名
 		:param remoteUser: 被同步文件工站用户密码
 		:return: True/False
@@ -70,17 +71,18 @@ class IP_Pool:
 			exit(1)
 
 		(dir, filename) = os.path.split(syncFileOrDir)
-		## -u 不同步旧版本
+		## -u 同步时旧版本不会覆盖新版本
 		if reverse:
-			sync_cmd = "/usr/bin/rsync -avu %s@%s://%s %s" %( remoteUser, remoteIP, syncFileOrDir, dir)
+			sync_cmd = "/usr/bin/rsync -avu %s@%s://%s %s" %( remoteUser, remoteIP, syncFileOrDir, self.tmp_csv_file)
 		else:
 			sync_cmd = "/usr/bin/rsync -avu %s %s@%s://%s" % (syncFileOrDir, remoteUser, remoteIP, dir)
-
+		print("sync_cmd=%s" % sync_cmd)
 		cmd = """
 	expect << EOF
 	set timeout 3
 	spawn %s
 	expect {
+			-re "Are you sure you want to continue connecting (yes/no)?" { send "yes\r"; exp_continue }
 	        -re "Password:" { send "%s\r"; exp_continue }
 	        -re "total size is" { exit 0}
 	    timeout {
@@ -94,36 +96,43 @@ class IP_Pool:
 	}
 	EOF
 	        """ %(sync_cmd, remotePWD)
-		#% (dir, filename, remoteIP, dir)
-		(res, rev) = jcu.readCMD(cmd, True)
-		#print("syncConfigOn2Stations (res, rev) -> %s" %str((res,rev)))
-		if res == 0:
-			return True
-		return False
 
-	def increSync(self, remoteIP, syncFileOrDir, reverse=False, remoteUser="gdlocal", remotePWD="gdlocal"):
+		(res, rev) = jcu.readCMD(cmd, True)
+		if res == 0:
+			print("Get remote file successul. [IP:%s]" % remoteIP)
+		else:    ## rsync 有可能失败，尝试重试
+			(res, rev) = jcu.readCMD(cmd, True)
+			if res != 0:
+				print("Get remote file failed. [IP:%s], exiting..." % remoteIP)
+				return False
+			else:
+				print("Retry get remote file successul. [IP:%s]" % remoteIP)
+		return True
+
+	def increSync(self, remoteIP, syncFileOrDir, remoteUser="gdlocal", remotePWD="gdlocal"):
 		"""
 		# Incremental synchronization
 		# 两个工站进行增量同步 （其中一个是本机）
 		# Tips: 适用于单文件单增量同步，传入单syncFileOrDir若是文件夹则可能失败
 		:param remoteIP: 远程工站IP需手动指定
 		:param syncFileOrDir: 要同步的文件或文件夹
-		:param reverse: 是否反向同步 True/False
+		:param reverse: 是否反向同步 True/False, 默认正向同步False
 		:param remoteUser: 被同步文件工站用户名
 		:param remoteUser: 被同步文件工站用户密码
 		:return: True/False
 		"""
 		if not os.path.isfile(syncFileOrDir):
-			print("'syncFileOrDir' should be a exist file path.")
+			print("'%s' should be a exist file path." %syncFileOrDir)
+			# return False
+
+		# 反向同步，即下载远程文件到本地. 如果失败则退出。
+		if not self.fullSync(remoteIP, syncFileOrDir, True, remoteUser, remotePWD):
+			print("Failed: Can't get remote file from [IP:%s]." %remoteIP )
 			return False
 
-		# 反向同步，即下载远程文件到本地
-		if not self.fullSync(remoteIP, syncFileOrDir+".1", True, remoteUser, remotePWD):
-			print("Get remote file failed. [IP:%s]" %remoteIP)
-			return False
-
-		remote_data = jcu.readCSVFile(syncFileOrDir+".1")
+		remote_data = jcu.readCSVFile(self.tmp_csv_file)
 		local_data = jcu.readCSVFile(syncFileOrDir)
+		jcu.readCMD(["rm -rf %s" %self.tmp_csv_file], True )
 		## 将本地数据与远程数据对比合并重复项，并写入新数据
 		if remote_data and local_data and remote_data == local_data:
 			## 如果数据对比相同则不写入新数据和远程同步
@@ -137,7 +146,30 @@ class IP_Pool:
 			if self.fullSync(remoteIP, syncFileOrDir, False, remoteUser, remotePWD):
 				return True
 		return False
-		#remote_data =
+
+	def increSyncAll(self, syncFileOrDir="", remoteUser="gdlocal", remotePWD="gdlocal", remoteIP_list=[]):
+		if not remoteIP_list and not isinstance( remoteIP_list, list):
+			print("remoteIP_list should be type of list.")
+			return None
+		print("remote IP list:%s" %(str(remoteIP_list)))
+		failIP = []
+		for remoteIP in remoteIP_list:
+			if not self.increSync(remoteIP, syncFileOrDir, remoteUser, remotePWD):
+				failIP.append(remoteIP)
+		print("increSyncAll failed IPs:%s" %(str(failIP)))
+		return failIP
+
+	def fullSyncAll(self, syncFileOrDir="",remoteUser="gdlocal", remotePWD="gdlocal", remoteIP_list=[]):
+		if not remoteIP_list and not isinstance(remoteIP_list, list):
+			print("remoteIP_list should be type of list.")
+			return None
+		print("remote IP list:%s" % (str(remoteIP_list)))
+		failIP = []
+		for remoteIP in remoteIP_list:
+			if not self.fullSync(remoteIP, syncFileOrDir, False, remoteUser, remotePWD):
+				failIP.append(remoteIP)
+		print("increSyncAll failed IPs:%s" % (str(failIP)))
+		return failIP
 
 	def mergeLists(self, *args):
 		"""
@@ -150,6 +182,8 @@ class IP_Pool:
 			return []
 		merged_list = set()
 		for item in args:
+			if not item:
+				continue
 			for i_list in item:
 				try:
 					merged_list.add(tuple(i_list))
@@ -159,6 +193,7 @@ class IP_Pool:
 					continue
 
 		return sorted(merged_list, key=lambda x: x[0], reverse=False)
+
 
 def main():
 	"""
@@ -185,11 +220,9 @@ if __name__ == "__main__":
 	ipp = IP_Pool()
 	#print (ipp.ip_pool)
 	print("==>")
-	#print (ipp.fullSync("172.21.204.238", "/tmp/autopanic_ips_stats.csv"))
-	print(ipp.increSync("172.21.204.238", "/tmp/autopanic_ips_stats.csv", reverse=False, remoteUser="gdlocal", remotePWD="gdlocal"))
-	pass
-
-
+	#print(ipp.increSync("172.21.204.238", "/tmp/autopanic_ips_stats.csv", remoteUser="gdlocal", remotePWD="gdlocal"))
+	#print(ipp.increSyncAll( syncFileOrDir="/tmp/autopanic_ips_stats.csv", remoteUser="gdlocal", remotePWD="gdlocal", remoteIP_list=["172.21.204.237", "172.21.204.238","172.21.204.239"]))
+	print(ipp.fullSyncAll(syncFileOrDir="/tmp/autopanic_ips_stats.csv", remoteUser="gdlocal", remotePWD="gdlocal", remoteIP_list=["172.21.204.237", "172.21.204.238", "172.21.204.239"]))
 
 else:
 	main()
