@@ -1,5 +1,11 @@
 # task_manager.py
 # -*- coding:utf-8 -*-
+
+# 多进程分布式Demo
+# 服务器端
+# master服务端原理：通过managers模块把Queue通过网络暴露出去，其他机器的进程就可以访问Queue了
+# 服务进程负责启动Queue，把Queue注册到网络上，然后往Queue里面写入任务，代码如下:
+
 import random, queue
 from multiprocessing.managers import BaseManager
 import numpy as np
@@ -33,7 +39,6 @@ def startManager(host, port, authkey):
     manager.start()
     return manager
 
-
 def put_queue(manager, objs):
 	# 通过网络访问queueu
 	task = manager.get_task_queue()
@@ -46,9 +51,8 @@ def put_queue(manager, objs):
 			print("put_queue task full.exit ")
 			break
 
-
-
 def get_result(worker):
+	# 获取分布式计算结果
 	result = worker.get_result_queue()
 	while 1:
 		try:
@@ -60,8 +64,6 @@ def get_result(worker):
 			continue
 		else:
 			pass
-
-
 
 
 if __name__ == "__main__":
