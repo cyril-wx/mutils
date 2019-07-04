@@ -11,6 +11,7 @@ from multiprocessing.managers import BaseManager
 import numpy as np
 import time
 
+
 # 发送任务的队列
 task_queue = queue.Queue()
 # 接收结果的队列
@@ -39,6 +40,7 @@ def startManager(host, port, authkey):
     manager.start()
     return manager
 
+
 def put_queue(manager, objs):
 	# 通过网络访问queueu
 	task = manager.get_task_queue()
@@ -51,12 +53,13 @@ def put_queue(manager, objs):
 			print("put_queue task full.exit ")
 			break
 
+
+
 def get_result(worker):
-	# 获取分布式计算结果
 	result = worker.get_result_queue()
 	while 1:
 		try:
-			n = result.get(timeout=1)
+			n = result.get(timeout=10)
 			print("Result get {}".format(n))
 			time.sleep(1)
 		except queue.Empty:
@@ -64,6 +67,8 @@ def get_result(worker):
 			continue
 		else:
 			pass
+
+
 
 
 if __name__ == "__main__":
