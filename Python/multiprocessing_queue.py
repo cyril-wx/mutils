@@ -4,6 +4,11 @@ from multiprocessing import Process, Pipe
 import time
 import os
 
+"""
+多进程间通信
+"""
+
+
 class ClockProcess(Process):
 
     def __init__(self,value):
@@ -65,31 +70,41 @@ import multiprocessing
 # 创建队列，可以放3条消息
 manager = multiprocessing.Manager()
 q = manager.Queue(5)
-save(filename, q)
 
-def fun1():
+def fun_product():
 	sleep(1)
-	aa = bb = 1
 	while True:
-		aa = aa + 1
-		bb = bb + 2
-		info = {"2_a":aa,"2_b":bb}
-		print("_2_ put info {}".format(info))
-		q.put(info)
-		save(filename, q)
+		info = load(filename)
+		if not info:
+			info = {"aa":1, "bb":2 }
+			print("_1_ create new info {}".format(info))
+		else:
+			print("_1_ product pre info {}".format(info))
+			aa = info['aa']
+			bb = info['bb']
+			info['aa'] = aa+2
+			info['bb'] = aa+3
+			print("_1_ product post info {}".format(info))
+
+		print("_1_ save info {}".format(info))
+		save(filename, info)
+		#q.put(info)
 		sleep(3)
 
-def fun2():
-	sleep(2)
+def fun_get():
 	while True:
-		q=load(filename)
-		if q:
+		sleep(2)
+		info=load(filename)
+		if info:
 			#print("收到消息",q.__next__().get())
-			print("_2_ 收到消息", q.get())
+			#print("q not None, but not get from it.")
+			print("_1_ load info", info)
+		else:
+			print("_1_ load info None")
 
-p1 = Process(target = fun1)
-p2 = Process(target = fun2)
+p1 = Process(target = fun_product)
+p2 = Process(target = fun_get)
 p1.start()
-p2.start()
+#p2.start()
 p1.join()
-p2.join()
+#p2.join()
