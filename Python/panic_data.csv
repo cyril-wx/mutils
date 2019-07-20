@@ -1,0 +1,9 @@
+NO,Location,Validation,Station,Config,UNIT#,SrNm,Bundle,OSD Version,Panic info,Umbrella Radar,Radar,Status/Action,Comment/Solution,Date
+1,FXGL,Online,Burnin,2G15R,3021,C39Z309HNQJ3,YukonAni17A95220r,405," panic: ANS2 Recoverable Panic - assert failed: [11184],src/aspcore/system/seg.c:2572:HIX 8 timed out for segIdx 0xaf in  8.1 seconds, comp FIFO count 0, bus=0, nandOp=11 - Timer(11)
+"," /
+ ",rdar://problem/53293517,"Updated  corefile log, burnin log, sysdiagnose.",,0719
+2,FXGL,Online,Burnin,2M17W, 3021, C39Z309HNQJ3,YukonAni17A95220r,405," panic: ANS2 Recoverable Panic - assert failed: [11184],src/aspcore/system/seg.c:2572:HIX 0 timed out for segIdx 0x7a in  8.1 seconds, comp FIFO count 0, bus=0, nandOp=0 - Timer(11)
+",,rdar://problem/53251764,"Updated  corefile log, burnin log, sysdiagnose.",,0718N
+3,FXGL,Offline,Burnin,2M12BX,519,C39Z2001NQHV,YukonAni17A95220t, 422,"panic: ""AppleSocHot: Hot Hot Hot (89150ECC/5918 88B110F2/6778 09070F19/0 87A81662/8953 879616B7/9085 883C13A3/7854, Ids 31/9/27/21/0/5/0/0/1, Perf ",rdar://problem/52100100,rdar://problem/53249871,"Updated  corefile log, burnin log, sysdiagnose.",,0718N
+4,FXGL,Offline,Burnin,2M12BX,519,C39Z2001NQHV,YukonAni17A95220t,423,"panic: ""AppleSocHot: Hot Hot Hot (89150ECC/5918 88B110F2/6778 09070F19/0 87A81662/8953 879616B7/9085 883C13A3/7854, Ids 31/9/27/21/0/5/0/0/1, Perf ",,rdar://problem/53269323,"Updated  corefile log, burnin log, sysdiagnose.",,0718N
+5,FXGL,Online,Burnin,1G1R,001634,C39Z3017NQJG,YukonAni17A5220r,405,"[D42_DVT_ONLINE] YukonAni17A5220r: panic: ""AppleSocHot: Hot Hot Hot (890E0EF3/5979 88AD1108/6812 09530DB9/0 87CC15B7/8685 8776174F/9323 8847136E/7771, Ids 33/9/29/20/0/5/0/0/1, Perf 100/45)""@AppleEmbeddedTempSensor/AppleEmbed - C39Z3017NQJG",,rdar://problem/53295125,"Updated  corefile log, burnin log, sysdiagnose.",,0719
