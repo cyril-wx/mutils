@@ -1,9 +1,7 @@
 #! coding: utf-8
 # This python script is used for NonUI reboot unit, and save all syslog info
 #
-# Modify: Modified By Cyril@CoreOS On 07/23/19
-# Mail: cyril.wx.jiang@mail.foxconn.com
-
+#
 import serial
 import subprocess
 import time
@@ -50,6 +48,7 @@ class DownloadData():
 
     def Read(self):
         # data_cache = None
+        self.Device.flushOutput()
         error_count = 0
         try:
             yield self.Device.readline(self.Device.inWaiting())
@@ -60,15 +59,13 @@ class DownloadData():
             time.sleep(1)
             error_count += 1
         finally:
-            # self.Device.flushOutput()
             time.sleep(0.01)
 
 
     # return self.data
     def sendCmd(self, cmd):
         # debughandle = file(os.path.join(os.curdir,"debug.txt"),"a+")
-        # self.data =""
-        self.Device.flushOutput()
+        self.Device.flushInput()
         cmd = cmd + "\n"
         chunks = [cmd[i:i + 8] for i in range(0, len(cmd), 8)]
         for chunk in chunks:
@@ -88,7 +85,7 @@ class DownloadData():
             if "login:" in line:
                 self.sendCmd("root")
                 line = next(self.Read())
-                
+
             if "Password:" in line:
                 self.sendCmd("alpine")
                 self.sendCmd("")
@@ -167,7 +164,6 @@ if __name__ == '__main__':
         # Dev.sendCmd("")
         # Use cold boot instead reboot
         # Dev.sendCmd("reboot")
-
 
 
         # command to shut down the unit by putting unit into shipping mode.
