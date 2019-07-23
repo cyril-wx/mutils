@@ -36,7 +36,8 @@ class DownloadData():
             self.Device = serial.Serial(port=self.port, baudrate=self.baudrate)
             self.Device.reset_output_buffer()
             self.Device.reset_input_buffer()
-        except:
+        except Exception as e:
+            self.debughandle.write("%s.%s: %s" %(self.__class__.__name__,self.getFuncName(),e))
             raise Exception("Sorry,Serial port init faild, pls try again\n串口初始化异常，请重试")
 
     def printF(self, Object):
