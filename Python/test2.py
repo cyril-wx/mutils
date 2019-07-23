@@ -1,7 +1,7 @@
 #! coding: utf-8
 # This python script is used for NonUI reboot unit, and save all syslog info
-#
-#
+# Modify: Modified by Cyril@CoreOS on 23/07/19
+# Mail: cyril.wx.jiang@mail.x.x
 import serial
 import subprocess
 import time
@@ -50,17 +50,20 @@ class DownloadData():
         # data_cache = None
         self.Device.flushOutput()
         error_count = 0
-        try:
-            yield self.Device.readline(self.Device.inWaiting())
-        except:
-            if error_count > 3:
-                self.printF("Can't connect to device. exit.")
-                return
-            time.sleep(1)
-            error_count += 1
-        finally:
-            time.sleep(0.01)
-
+        while True:
+            try:
+                line = self.Device.readline(self.Device.inWaiting())
+                yield line
+            except:
+                if error_count > 5: # Read() 5秒超时时间
+                    self.printF("EOF: Can't read new data from device. exit.")
+                    break
+                time.sleep(1)
+                error_count += 1
+                continue
+            else:
+                time.sleep(0.01)
+        raise EOFError("EOF: Can't read new data from device.")
 
     # return self.data
     def sendCmd(self, cmd):
@@ -72,63 +75,77 @@ class DownloadData():
             self.Device.write(chunk)
             time.sleep(0.05)
         time.sleep(0.1)
-        return self.Read()
 
 
     def Login(self):
-
-        Count = 5
+        Start = time.time()
         self.sendCmd("")
-        while Count:
-            self.printF("********Attemping NonUI login: %s *****************" % (5 - Count))
-            line = next(self.Read())
-            if "login:" in line:
-                self.sendCmd("root")
+        while Start-time.time()<5:     # 5秒内未登录成功则失败
+            #self.printF("********Attemping NonUI login: %s *****************" % (5 - Count))
+            try:
                 line = next(self.Read())
+                if re.search("login:", line):
+                   self.sendCmd("root")
+                   line = next(self.Read())
 
-            if "Password:" in line:
-                self.sendCmd("alpine")
-                self.sendCmd("")
-                line = next(self.Read())
+                if re.search("Password:", line):
+                    self.sendCmd("alpine")
+                    self.sendCmd("")
+                    line = next(self.Read())
 
-            if "iPhone:~ root#" in line:
-                print "Login successful"
-                return
-            else:
-                self.sendCmd("")
-            Count -= 1
-
-        if not bool(Count):
-            self.printF("Can not Login NonUI mode, pls check the unit status")
-            raise ValueError("Can not Login NonUI mode, pls check the unit status")
+                if re.search("root#", line):
+                    print "Login successful"
+                    return
+                else:
+                    self.sendCmd("")
+                time.sleep(0.01)
+            except:
+                continue
+        raise ValueError("Timeout: Can not Login NonUI mode, pls check the unit status")
 
     def TimeLine(self):
         return time.strftime("%Y-%m-%d_%H:%M:%S")
 
+    def getFuncName(self, obj=sys._getframe()):
+        """
+        # 获取调用方法的方法名
+        # 如：方法A调用本方法" getFuncName() "，返回 "A"
+        :param obj: 无须传入参数
+        :return: 调用方法的方法名
+        """
+        return obj.f_code.co_name
+
     def SN_Grab(self):
         self.sendCmd("sysconfig read -k SrNm")
-        self.SN = ""
-        try:
-            if [line for line in self.Read() if re.search("Key  | Type | Data", line)]:
-                sn_line = next(self.Read())
-                self.SN = sn_line.strip().split("|")[2].strip()
-            if len(self.SN) != 12:
-                raise ValueError
+        Start = time.time()
+        while True and Start-time.time()<3:     # 3秒内读不到数据则失败
+            try:
+                line = next(self.Read())
+                if re.search("Key  | Type | Data", line):
+                    sn_line = next(self.Read())
+                    self.SN = sn_line.strip().split("|")[2].strip()
+                    return
         # print "--------------------------------->",self.SN
-        except Exception as e:
-            print ("Wrong SN type, pls call DRI. \n %s") % e
+            except Exception as e:
+                self.printF("%s.%s: %s" %(self.__class__.__name__,self.getFuncName(),e))
+                break
+        raise ValueError("Get SN Error.")
 
     def CFG_Grab(self):
         # This function still has some issues
         self.sendCmd("sysconfig read -k CFG#")
-        try:
-            CFG_res = [line for line in self.Read() if re.search("CFG# | STR  |", line)]
-            if CFG_res:
-                CFG = CFG_res[1].split("|")[2].strip().split("/")
-                self.CFG = "%s_%s_%s" % (CFG[0], CFG[-2], CFG[-1])
-        except Exception as e:
-            # CFG = "NA_NA_NA"
-            print ("Wrong CFG# type, pls call DRI. \n %s") % e
+        Start = time.time()
+        while True and Start - time.time() < 3:     # 3秒内读不到数据则失败
+            try:
+                line = next(self.Read())
+                if re.search("CFG# | STR  |", line):
+                    CFG = line.split("|")[2].strip().split("/")
+                    self.CFG = "%s_%s_%s" % (CFG[0], CFG[-2], CFG[-1])
+                    return
+            except Exception as e:
+                self.printF("%s.%s: %s" %(self.__class__.__name__,self.getFuncName(),e))
+                break
+        raise ValueError("Get CFG# Error.")
 
     def UpdateLogName(self):
         UpdateName = "%s/%s" % (
@@ -173,14 +190,20 @@ if __name__ == '__main__':
         Dev.sendCmd("smcif -r CHI1")
         Dev.sendCmd("smcif -smbWritePEC 2 0x16 0xC5 2 0x0E 0x55")
 
-        # time.sleep(0.1)
+        time.sleep(0.1)
         Start = time.time()
-        if [line for line in Dev.Read() if re.search("tx_flush:", line)]:
-            Dev.sendCmd("")
-            if [line for line in Dev.Read() if re.search("login:", line)]:
+        while True:
+            line = next(Dev.Read())
+            if re.search("tx_flush:", line):
+                Start = time.time()
+                Dev.sendCmd("")
+            if re.search("login:", line):
                 break
+            if (time.time()-Start > 45):
+                Dev.printF("Timeout: Can't go into iOS mode.")
+                exit (1)
+            time.sleep(0.01)
+            continue
 
-        if time.time() - Start > 45:
-            break
     Dev.UpdateLogName()
 
