@@ -2,7 +2,6 @@
 import sqlite3
 import os
 import re
-#import weakref
 import jc
 from jc import csv_rw
 from jc import utils
@@ -239,7 +238,7 @@ class SqliteHelper(object):
             return False
 
         # 导入CSV文件进入PANIC_REPORT表
-        info = sql_helper.readCSVs(data_file)
+        info = self.readCSVs(data_file)
         column_name = info[1].keys()      # table column_name
 
         self.mlog.info("Opened database successfully")
@@ -263,46 +262,47 @@ class SqliteHelper(object):
         self.conn.commit()
         self.mlog.info("Table [%s] dropped successfully. "%tableName)
 
+# 测试模块功能
+def test():
 
-if __name__ == "__main__":
     sql_helper = SqliteHelper("panic_report.db")
 
     # 创建数据库及PANIC_REPORT表
-    #sql_helper.createTable_Panic()
+    # sql_helper.createTable_Panic()
 
     # 导入CSV文件进入PANIC_REPORT表
-   # info = sql_helper.readCSVs("/Users/gdlocal1/Desktop/Cyril/TMP/Macan_DVT_Panic_Tracking_Report_0719_patrick")
+    # info = sql_helper.readCSVs("/Users/gdlocal1/Desktop/Cyril/TMP/Macan_DVT_Panic_Tracking_Report_0719_patrick")
 
     # 测试insert
-   # test_info = { "1": {"Location":"FXGL", "Validation":"Offline"}}
-   # print (type(test_info))
-   # sql_helper.insert(info, table="PANIC_REPORT")
-   # test_info = {"UNIT#":"9001","SrNm":"C390001", "Umbrella Radar":"123", "Radar":"123", "OSD Version":"0032"}
-   # sql_helper.insert(test_info, table="PANIC_REPORT")
+    # test_info = { "1": {"Location":"FXGL", "Validation":"Offline"}}
+    # print (type(test_info))
+    # sql_helper.insert(info, table="PANIC_REPORT")
+    # test_info = {"UNIT#":"9001","SrNm":"C390001", "Umbrella Radar":"123", "Radar":"123", "OSD Version":"0032"}
+    # sql_helper.insert(test_info, table="PANIC_REPORT")
 
     # 测试select
- #   a = sql_helper.select(table="PANIC_REPORT", args=["UNIT#","SrNm", "Umbrella Radar", "Radar", "OSD Version"])
- #   b = sql_helper.select(table="PANIC_REPORT", args=["*"])
-#    c = sql_helper.select(table="PANIC_REPORT", args=["*"], conditions="`OSD Version`>'400'")
+    #   a = sql_helper.select(table="PANIC_REPORT", args=["UNIT#","SrNm", "Umbrella Radar", "Radar", "OSD Version"])
+    #   b = sql_helper.select(table="PANIC_REPORT", args=["*"])
+    #    c = sql_helper.select(table="PANIC_REPORT", args=["*"], conditions="`OSD Version`>'400'")
 
     # 测试update
-#    valueDict = {"UNIT#":"9001","SrNm":"C390001", "Umbrella Radar":"123"}
-#   indexKey = {"SrNm":"C390001", "Radar":"123"}
+    #    valueDict = {"UNIT#":"9001","SrNm":"C390001", "Umbrella Radar":"123"}
+    #   indexKey = {"SrNm":"C390001", "Radar":"123"}
     ## 单记录update测试
-    #d = sql_helper.update(valueDict=valueDict, indexKey=indexKey, table="PANIC_REPORT")
+    # d = sql_helper.update(valueDict=valueDict, indexKey=indexKey, table="PANIC_REPORT")
     ## 多记录update测试
-#    valueDict = {1:{"UNIT#": "9001", "SrNm": "C390001", "Umbrella Radar": "123"}}
-#    indexKey = {1:{"SrNm": "C390001", "Radar": "123"}}
-#    d = sql_helper.update(valueDict=valueDict, indexKey=indexKey, table="PANIC_REPORT")
+    #    valueDict = {1:{"UNIT#": "9001", "SrNm": "C390001", "Umbrella Radar": "123"}}
+    #    indexKey = {1:{"SrNm": "C390001", "Radar": "123"}}
+    #    d = sql_helper.update(valueDict=valueDict, indexKey=indexKey, table="PANIC_REPORT")
 
-#   # 测试插入表
-#    data = sql_helper.readCSVs(csv_f)
-#    sql_helper.insert(data, table="TEST")
-#    b = sql_helper.select(table="TEST", args=["*"])
-#    print("TEST SELECT")
-#    for i in b:
-#        print(i)
-#    sql_helper.dropTable("TEST")
+    #   # 测试插入表
+    #    data = sql_helper.readCSVs(csv_f)
+    #    sql_helper.insert(data, table="TEST")
+    #    b = sql_helper.select(table="TEST", args=["*"])
+    #    print("TEST SELECT")
+    #    for i in b:
+    #        print(i)
+    #    sql_helper.dropTable("TEST")
 
     sql_helper.mlog.info("###### 创建表 PANIC_REPORT ######")
     tableName = "D42_DVT_PANIC_REPORT"
@@ -320,10 +320,10 @@ if __name__ == "__main__":
         sql_helper.mlog.error("Dump data into table [%s] failed: %s" % (tableName, e))
 
     sql_helper.mlog.info("###### 查询所有数据 ######")
-    select_data = [ i for i in sql_helper.select(table=tableName, args=["*"]) ]
-    print( select_data )
+    select_data = [i for i in sql_helper.select(table=tableName, args=["*"])]
+    print(select_data)
     sql_helper.mlog.info("###### 查询所有母雷达 ######")
-    print( [ i[0] for i in sql_helper.select(table=tableName, args=["Umbrella Radar"]) if i[0] != "" and i[0] != "/"])
+    print([i[0] for i in sql_helper.select(table=tableName, args=["Umbrella Radar"]) if i[0] != "" and i[0] != "/"])
 
     sql_helper.mlog.info("###### 导出数据 ######")
     export_path = "/tmp/test.csv"
@@ -331,6 +331,8 @@ if __name__ == "__main__":
     csv_rw.writeCSVFile(export_path, export_data)
 
 
-
+if __name__ == "__main__":
+    # 测试SqliteTools模块
+    test()
 
 
