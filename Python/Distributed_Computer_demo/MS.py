@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 
 # 多进程分布式Demo
-# 服务器端
+# Server and Client
 # master服务端原理：通过managers模块把Queue通过网络暴露出去，其他机器的进程就可以访问Queue了
 # 服务进程负责启动Queue，把Queue注册到网络上，然后往Queue里面写入任务，代码如下:
 
