@@ -203,9 +203,9 @@ def test_master(jFile):
         except Exception as e:
             print(e)
             exit(1)
-        finally:
-            # 关闭服务器
-            manager.shutdown
+    
+    # 关闭服务器
+    # manager.shutdown
 
 
 def loadConfigData(jFile="/Users/gdlocal1/Desktop/Cyril/Coding/Panic4.1/AutoPanic/AutoPanic/JsonConfig/app_config.json"):
