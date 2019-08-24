@@ -277,7 +277,7 @@ class SqliteHelper(object):
 			tag = 0
 			for c in content:
 				row_dict = {}
-				for ti in range(0, len(title) - 1):
+				for ti in range(0, len(title)):
 					row_dict.update({title[ti]: content[tag][ti]})
 
 				rows_dict.update({id + 1: row_dict})
