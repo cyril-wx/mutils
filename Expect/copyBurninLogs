@@ -1,0 +1,47 @@
+#!/bin/bash
+
+echo "========== CopyBurninLogs Bash Script =========="
+echo "|| 1.使用此脚本前需手动跳转机台模式到OS       ||"
+echo "|| 2.拷贝的burnin log在桌面 burnin_logs 文件夹||"
+echo "================================================"
+
+
+THIS_FILE="copyBurninLogs"
+
+# current script PID
+echo "PID of this script: $$"
+
+# close pre tcprelay port.
+ps -ef | grep '10000 873 23' | awk -F ' ' '{print $2}' | xargs kill -9 
+
+# open new tcprelay port
+tcprelay --portoffset 10000 873 23 ssh scp &
+
+/usr/bin/expect -c '
+	set timeout 20;
+	send_user "helloworld";
+	spawn ssh root@localhost -p 10022
+	expect {
+	        -re "Invalid|fail" { exit 1 }
+	        -re "Are you sure you want to continue connecting" { send "yes\r" ; exp_continue }
+	        -re "Password:" { send "alpine\r"; exp_continue }
+		-re "root#" { 
+			set testResult [exec bash -c "scp -r -P 10022 root@localhost:/private/var/logs /Users/gdlocal/Desktop/burnin_logs"];
+			send_user "copy logs result:$testResult"
+			}
+
+	        timeout { send_user "timeout..."; exit 255 }
+	        eof { send_user "eof..."; exit 256 }
+	}'
+
+
+# close tcprelay port.
+ps -ef | grep '10000 873 23' | awk -F ' ' '{print $2}' | xargs kill -9 
+
+# Finish
+echo "Finish"
+
+# If everything passed, close the terminal window and exit
+osascript -e 'tell application "Terminal" to close (every window whose name contains "'"$THIS_FILE"'")' &
+
+exit 0
