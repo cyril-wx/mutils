@@ -24,7 +24,7 @@ tcprelay --portoffset 10000 873 23 ssh scp &
 	expect {
 	        -re "Invalid|fail" { exit 1 }
 	        -re "Are you sure you want to continue connecting" { send "yes\r" ; exp_continue }
-	        -re "Password:" { send "alpine\r"; exp_continue }
+	        -re "assword:" { send "alpine\r"; exp_continue }
 		-re "root#" { 
 			send "defaults write com.apple.sysdiagnose factoryDisable -bool FALSE\r";
 			send "sysdiagnose\r";
@@ -36,8 +36,24 @@ tcprelay --portoffset 10000 873 23 ssh scp &
 	}'
 
 # 拷贝 burnin log
-scp -r -P 10022 root@localhost:/private/var/logs /Users/gdlocal/Desktop/burnin_logs
-scp -r -P 10022 root@localhost://var/mobile/Library/Logs/CrashReporter/DiagnosticLogs/sysdiagnose/sysdiagnose_*.tar.gz /Users/gdlocal/Desktop/
+
+/usr/bin/expect -c '
+	set timeout 100;
+	spawn scp -r -P 10022 root@localhost:/private/var/logs /Users/gdlocal/Desktop/burnin_logs
+	expect {
+		-re "Are you sure you want to continue connecting" { send "yes\r" ; exp_continue }
+		-re "assword:" { send "alpine\r"; exp_continue }
+		-re "root#" { exit 0 }
+	}'
+
+/usr/bin/expect -c '
+	set timeout 100;
+	spawn scp -r -P 10022 root@localhost://var/mobile/Library/Logs/CrashReporter/DiagnosticLogs/sysdiagnose/sysdiagnose_*.tar.gz /Users/gdlocal/Desktop/
+        expect {
+                -re "Are you sure you want to continue connecting" { send "yes\r" ; exp_continue }
+                -re "assword:" { send "alpine\r"; exp_continue }
+                -re "root#" { exit 0 }
+        }'
 
 
 # close tcprelay port.
