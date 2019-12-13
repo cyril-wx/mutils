@@ -1,0 +1,25 @@
+#!/bin/bash
+
+file="/tmp/unit_info.txt"
+HOME_DIR=`cd ~;pwd`
+pr_log_path_prefix="$HOME_DIR/Library/Application Support/PurpleRabbit/Logs"
+
+# 清除前一次的刷机log
+bak=$IFS     #定义一个变量bak保存IFS的值
+IFS=$'\n'    #将环境变量IFS的值修改为换行符
+for line in `cat ${file}`
+do
+	Loc_=`echo $line | awk -F ',' '{print $2}' | awk  -F ':' '{print $2}' | tr 'a-w' 'A-W'`	
+	SN_=`echo $line | awk -F ',' '{print $3}' | awk  -F ':' '{print $2}' | tr 'a-w' 'A-W'`	
+	echo "$Loc_:$?, $SN_:$?"
+	if [[ $Loc_ != "" ]] && [[ $SN_ != "" ]]; then
+		pr_log_path=${pr_log_path_prefix}/$Loc_/$SN_
+		echo "Get previous default purpleRabbit log path: $pr_log_path"
+		if [ -d ${pr_log_path} ]; then
+			#echo "文件夹已存在，需要删除"
+			echo "delete: $pr_log_path/* "
+			rm -rf $pr_log_path/*
+		fi
+	fi
+done
+
