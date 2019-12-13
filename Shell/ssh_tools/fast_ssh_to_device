@@ -1,0 +1,27 @@
+#!/bin/bash
+
+echo "=================== Fast SSH to Device ========================"
+
+THIS_FILE="fast_ssh_to_device"
+
+# current script PID
+echo "PID of this script: $$"
+
+# close pre tcprelay port.
+ps -ef | grep '10000 873 23' | awk -F ' ' '{print $2}' | xargs kill -9 
+
+# open new tcprelay port
+tcprelay --portoffset 10000 873 23 ssh scp &
+
+# 拷贝 burnin log
+# scp -r -P 10022 root@localhost:/private/var/logs /Users/gdlocal/Desktop/burnin_logs 
+ssh -p 10022 root@localhost
+
+
+# close tcprelay port.
+ps -ef | grep '10000 873 23' | awk -F ' ' '{print $2}' | xargs kill -9 
+
+# If everything passed, close the terminal window and exit
+# osascript -e 'tell application "Terminal" to close (every window whose name contains "'"$THIS_FILE"'")' &
+
+exit 0

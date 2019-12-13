@@ -1,0 +1,17 @@
+# ['ITEM', '工號', '姓名', '刷卡地點', '刷卡類型', '刷卡日期', '刷卡時間']
+# ['1', 'F1230001', '乔布斯', 'B23 2F RD', '考勤', '2018/11/01', '05:05:14']
+
+USE EISP_PERS;
+CREATE TABLE `punch_info` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `job_num` varchar(10) NOT NULL COMMENT '工号',
+  `name` tinytext NOT NULL COMMENT '姓名',
+  `punch_loc` varchar(20) NOT NULL DEFAULT 'B23 2F RD' COMMENT '刷卡地点',
+  `punch_type` varchar(4) NOT NULL DEFAULT '考勤' COMMENT '刷卡类型',
+  `punch_date` date NOT NULL DEFAULT '2018/02/14' COMMENT '刷卡日期',
+  `puch_time` time NOT NULL DEFAULT '08:00:00' COMMENT '刷卡时间',
+  PRIMARY KEY (`id`)
+  # UNIQUE KEY `name_UNIQUE` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
+INSERT INTO `punch_info` (`job_num`, `name`,`punch_loc`,`punch_type`,`punch_date`,`puch_time`) VALUES ('F0000001','乔布斯','B23 2F RD','考勤','2018/02/14','08:00:00');

@@ -1,0 +1,956 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<HTML>
+	<HEAD>
+		<title>個人刷卡信息查詢</title>
+		<meta name="GENERATOR" content="Microsoft Visual Studio .NET 7.1">
+		<meta name="CODE_LANGUAGE" content="C#">
+		<meta name="vs_defaultClientScript" content="JavaScript">
+		<meta name="vs_targetSchema" content="http://schemas.microsoft.com/intellisense/ie5">
+		<LINK id="skin" rel="stylesheet" type="text/css" href="../../INC/CSS/css.css">
+		<script src="../../INC/JS/OpenWindow.js" type="text/javascript"></script>
+		<script language="javascript">
+		 var fixedX = -1   // x position (-1 if to appear below control)
+ var fixedY = -1   // y position (-1 if to appear below control)
+ var startAt = 1   // 0 - sunday ; 1 - monday
+ var showWeekNumber = 0 // 0 - don't show; 1 - show
+ var showToday = 0  // 0 - don't show; 1 - show
+ //var imgDir = "pic/calendar/"   // directory for images ... e.g. var imgDir="/img/"
+ var imgDir = "";
+ 
+ var pathname = window.location.pathname.toUpperCase();
+ var longHref = pathname.substring(pathname.indexOf("WEB/"));
+ while(longHref.indexOf("/")>-1)
+ {
+	imgDir += "../";
+	longHref = longHref.substring(longHref.indexOf("/")+1);
+ }
+ imgDir += "INC/Images/";
+
+ var gotoString = "Go To Current Month"
+ var todayString = "Today is"
+ var weekString = "Wk"
+ var scrollLeftMessage = "Click to scroll to previous month. Hold mouse button to scroll automatically."
+ var scrollRightMessage = "Click to scroll to next month. Hold mouse button to scroll automatically."
+ var selectMonthMessage = "Click to select a month."
+ var selectYearMessage = "Click to select a year."
+ var selectDateMessage = "Select [date] as date." // do not replace [date], it will be replaced by date.
+
+ var crossobj, crossMonthObj, crossYearObj, monthSelected, yearSelected, dateSelected, omonthSelected, oyearSelected, odateSelected, monthConstructed, yearConstructed, intervalID1, intervalID2, timeoutID1, timeoutID2, ctlToPlaceValue, ctlNow, dateFormat, nStartingYear, nStartingMonth
+
+ var bPageLoaded=false
+ 
+ var ie = false;
+ var dom=document.getElementById
+ var ns4=document.layers
+ var today = new Date()
+ var dateNow  = today.getDate()
+ var monthNow = today.getMonth()
+ var yearNow  = today.getYear()
+ var imgsrc = new Array("drop1.gif","drop2.gif","left1.gif","left2.gif","right1.gif","right2.gif")
+ var img = new Array()
+
+ var bShow = false;
+ 
+ if((navigator.userAgent.toLowerCase().indexOf("opera") == -1) && (navigator.userAgent.toLowerCase().indexOf("msie") != -1))
+ {
+    ie = true;
+ }
+ var ismove = false;
+ var xx = 0;
+ var yy = 0;
+ function catchCalendar()
+ {
+    ismove = true;
+    var x = event.x+document.body.scrollLeft;
+    var y = event.y+document.body.scrollTop;
+    xx = x-document.getElementById("calendar").offsetLeft;
+    yy = y-document.getElementById("calendar").offsetTop;
+    //document.getElementById("calendar").setCapture();
+    document.onmousemove = moveCalendar;
+ }
+ function moveCalendar()
+ {
+    if(ismove)
+    {
+       document.getElementById("calendar").style.posLeft = event.x+document.body.scrollLeft-xx;
+       document.getElementById("calendar").style.posTop = event.y+document.body.scrollTop-yy;
+    }
+ }
+ function releaseCalendar()
+ {
+    ismove = false;
+    //document.getElementById("calendar").releaseCapture();
+    document.onmousemove = null;
+ }
+    /* hides <select> and <applet> objects (for IE only) */
+    function hideElement( elmID, overDiv )
+    {
+      if( ie )
+      {
+        for( i = 0; i < document.all.tags( elmID ).length; i++ )
+        {
+          obj = document.all.tags( elmID )[i];
+          if( !obj || !obj.offsetParent )
+          {
+            continue;
+          }
+      
+          // Find the element's offsetTop and offsetLeft relative to the BODY tag.
+          objLeft   = obj.offsetLeft;
+          objTop    = obj.offsetTop;
+          objParent = obj.offsetParent;
+          
+          while( objParent != null && objParent.tagName.toUpperCase() != "BODY" )
+          {
+            objLeft  += objParent.offsetLeft;
+            objTop   += objParent.offsetTop;
+            objParent = objParent.offsetParent;
+          }
+      
+          objHeight = obj.offsetHeight;
+          objWidth = obj.offsetWidth;
+      
+          if(( overDiv.offsetLeft + overDiv.offsetWidth ) <= objLeft );
+          else if(( overDiv.offsetTop + overDiv.offsetHeight ) <= objTop );
+          else if( overDiv.offsetTop >= ( objTop + objHeight ));
+          else if( overDiv.offsetLeft >= ( objLeft + objWidth ));
+          else
+          {
+            obj.style.visibility = "hidden";
+          }
+        }
+      }
+    }
+     
+    /*
+    * unhides <select> and <applet> objects (for IE only)
+    */
+    function showElement( elmID )
+    {
+      if( ie )
+      {
+        for( i = 0; i < document.all.tags( elmID ).length; i++ )
+        {
+          obj = document.all.tags( elmID )[i];
+          
+          if( !obj || !obj.offsetParent )
+          {
+            continue;
+          }
+        
+          obj.style.visibility = "";
+        }
+      }
+    }
+ function HolidayRec (d, m, y, desc)
+ {
+  this.d = d
+  this.m = m
+  this.y = y
+  this.desc = desc
+ }
+
+ var HolidaysCounter = 0
+ var Holidays = new Array()
+
+ function addHoliday (d, m, y, desc)
+ {
+  Holidays[HolidaysCounter++] = new HolidayRec ( d, m, y, desc )
+ }
+
+ if (dom)
+ {
+  for (i=0;i<imgsrc.length;i++)
+  {
+   img[i] = new Image
+   img[i].src = imgDir + imgsrc[i]
+  }
+  document.write ("<div onclick='bShow=true' id='calendar' onMouseDown='catchCalendar()' onMouseUp='releaseCalendar()' style='z-index:+999;position:absolute;visibility:hidden;cursor:move'><table width="+((showWeekNumber==1)?250:220)+" style='font-family:arial;font-size:11px;border-width:1px;border-style:solid;border-color:#a0a0a0;font-family:arial; font-size:11px}' bgcolor='#ffffff'><tr bgcolor='#0000aa'><td><table width='"+((showWeekNumber==1)?248:218)+"'><tr><td style='padding:2px;font-family:arial; font-size:11px;'><font color='#ffffff'><B><span id='caption'></span></B></font></td><td width='60px' >&nbsp;&nbsp;</td><td align=right><a href='javascript:hideCalendar()'><IMG SRC='"+imgDir+"close.gif' WIDTH='15' HEIGHT='13' BORDER='0' ALT='Close the Calendar'></a></td></tr></table></td></tr><tr><td style='padding:5px' bgcolor=#ffffff><span id='content'></span></td></tr>")
+   
+  if (showToday==1)
+  {
+   document.write ("<tr bgcolor=#f0f0f0><td style='padding:5px' align=center><span id='lblToday'></span></td></tr>")
+  }
+   
+  document.write ("</table></div><div id='selectMonth' style='z-index:+999;position:absolute;visibility:hidden;'></div><div id='selectYear' style='z-index:+999;position:absolute;visibility:hidden;'></div>");
+ }
+
+ var monthName = new Array("01","02","03","04","05","06","07","08","09","10","11","12")
+ var monthName2 = new Array("01","02","03","04","05","06","07","08","09","10","11","12")
+ if (startAt==0)
+ {
+  dayName = new Array ("Sun","Mon","Tue","Wed","Thu","Fri","Sat")
+ }
+ else
+ {
+  dayName = new Array ("Mon","Tue","Wed","Thu","Fri","Sat","Sun")
+ }
+ var styleAnchor="text-decoration:none;color:black;"
+ var styleLightBorder="border-style:solid;border-width:1px;border-color:#a0a0a0;"
+
+ function swapImage(srcImg, destImg)
+ {
+  if (ie) 
+  { 
+   document.getElementById(srcImg).setAttribute("src",imgDir + destImg) 
+  }
+ }
+
+ function init() 
+ {
+  if (!ns4)
+  {
+   if (!ie) 
+   { 
+    yearNow += 1900 
+   }
+
+   crossobj=(dom)?document.getElementById("calendar").style : ie? document.all.calendar : document.calendar
+   hideCalendar()
+
+   crossMonthObj=(dom)?document.getElementById("selectMonth").style : ie? document.all.selectMonth : document.selectMonth
+
+   crossYearObj=(dom)?document.getElementById("selectYear").style : ie? document.all.selectYear : document.selectYear
+
+   monthConstructed=false;
+   yearConstructed=false;
+
+   if (showToday==1)
+   {
+    document.getElementById("lblToday").innerHTML = todayString + " <a onmousemove='window.status=\""+gotoString+"\"' onmouseout='window.status=\"\"' title='"+gotoString+"' style='"+styleAnchor+"' href='javascript:monthSelected=monthNow;yearSelected=yearNow;constructCalendar();'>"+dayName[(today.getDay()-startAt==-1)?6:(today.getDay()-startAt)]+", " + dateNow + " " + monthName[monthNow].substring(0,3) + " " + yearNow + "</a>"
+   }
+
+   sHTML1="<span id='spanLeft' style='border-style:solid;border-width:1px;border-color:#3366FF;cursor:pointer' onmouseover='swapImage(\"changeLeft\",\"left2.gif\");this.style.borderColor=\"#88AAFF\";window.status=\""+scrollLeftMessage+"\"' onclick='javascript:decMonth()' onmouseout='clearInterval(intervalID1);swapImage(\"changeLeft\",\"left1.gif\");this.style.borderColor=\"#3366FF\";window.status=\"\"' onmousedown='clearTimeout(timeoutID1);timeoutID1=setTimeout(\"StartDecMonth()\",500)' onmouseup='clearTimeout(timeoutID1);clearInterval(intervalID1)'>&nbsp<IMG id='changeLeft' SRC='"+imgDir+"left1.gif' width=10 height=11 BORDER=0>&nbsp</span>&nbsp;"
+   sHTML1+="<span id='spanRight' style='border-style:solid;border-width:1px;border-color:#3366FF;cursor:pointer' onmouseover='swapImage(\"changeRight\",\"right2.gif\");this.style.borderColor=\"#88AAFF\";window.status=\""+scrollRightMessage+"\"' onmouseout='clearInterval(intervalID1);swapImage(\"changeRight\",\"right1.gif\");this.style.borderColor=\"#3366FF\";window.status=\"\"' onclick='incMonth()' onmousedown='clearTimeout(timeoutID1);timeoutID1=setTimeout(\"StartIncMonth()\",500)' onmouseup='clearTimeout(timeoutID1);clearInterval(intervalID1)'>&nbsp<IMG id='changeRight' SRC='"+imgDir+"right1.gif' width=10 height=11 BORDER=0>&nbsp</span>&nbsp"
+   sHTML1+="<span id='spanMonth' style='border-style:solid;border-width:1px;border-color:#3366FF;cursor:pointer' onmouseover='swapImage(\"changeMonth\",\"drop2.gif\");this.style.borderColor=\"#88AAFF\";window.status=\""+selectMonthMessage+"\"' onmouseout='swapImage(\"changeMonth\",\"drop1.gif\");this.style.borderColor=\"#3366FF\";window.status=\"\"' onclick='popUpMonth()'></span>&nbsp;"
+   sHTML1+="<span id='spanYear' style='border-style:solid;border-width:1px;border-color:#3366FF;cursor:pointer' onmouseover='swapImage(\"changeYear\",\"drop2.gif\");this.style.borderColor=\"#88AAFF\";window.status=\""+selectYearMessage+"\"' onmouseout='swapImage(\"changeYear\",\"drop1.gif\");this.style.borderColor=\"#3366FF\";window.status=\"\"' onclick='popUpYear()'></span>&nbsp;"
+   
+   document.getElementById("caption").innerHTML  = sHTML1
+
+   bPageLoaded=true
+  }
+ }
+
+ function hideCalendar() 
+ {
+  crossobj.visibility="hidden"
+  if (crossMonthObj != null)
+  {
+   crossMonthObj.visibility="hidden"
+  }
+  if (crossYearObj != null)
+  {
+   crossYearObj.visibility="hidden"
+  }
+
+     showElement( 'SELECT' );
+  showElement( 'APPLET' );
+ }
+
+ function padZero(num) 
+ {
+  return (num < 10)? '0' + num : num ;
+ }
+
+ function constructDate(d,m,y)
+ {
+  sTmp = dateFormat
+  sTmp = sTmp.replace ("dd","<e>")
+  sTmp = sTmp.replace ("d","<d>")
+  sTmp = sTmp.replace ("<e>",padZero(d))
+  sTmp = sTmp.replace ("<d>",d)
+  sTmp = sTmp.replace ("mmmm","<p>")
+  sTmp = sTmp.replace ("mmm","<o>")
+  sTmp = sTmp.replace ("mm","<n>")
+  sTmp = sTmp.replace ("m","<m>")
+  sTmp = sTmp.replace ("<m>",m+1)
+  sTmp = sTmp.replace ("<n>",padZero(m+1))
+  sTmp = sTmp.replace ("<o>",monthName[m])
+  sTmp = sTmp.replace ("<p>",monthName2[m])
+  sTmp = sTmp.replace ("yyyy",y)
+  return sTmp.replace ("yy",padZero(y%100))
+ }
+
+ function closeCalendar() 
+ {
+  var sTmp
+
+  hideCalendar();
+  ctlToPlaceValue.value = constructDate(dateSelected,monthSelected,yearSelected)
+ }
+
+ /*** Month Pulldown ***/
+
+ function StartDecMonth()
+ {
+  intervalID1=setInterval("decMonth()",80)
+ }
+
+ function StartIncMonth()
+ {
+  intervalID1=setInterval("incMonth()",80)
+ }
+
+ function incMonth () 
+ {
+  monthSelected++
+  if (monthSelected>11) 
+  {
+   monthSelected=0
+   yearSelected++
+  }
+  constructCalendar()
+ }
+
+ function decMonth () 
+ {
+  monthSelected--
+  if (monthSelected<0) 
+  {
+   monthSelected=11
+   yearSelected--
+  }
+  constructCalendar()
+ }
+ 
+ function upMonth() 
+ {
+  if(nStartingMonth > 0)
+  {
+   nStartingMonth --;
+   for (i=0; i<6; i++)
+   {
+    newMonth = (i + nStartingMonth);
+    if (newMonth == monthSelected)
+     txtMonth = "&nbsp;<B>" + monthName[newMonth] + "</B>&nbsp;";
+    else
+     txtMonth = "&nbsp;" + monthName[newMonth] + "&nbsp;";
+    document.getElementById("m"+i).innerHTML = txtMonth;
+   }
+  }
+  bShow=true
+ }
+
+ function downMonth() 
+ {
+  if(nStartingMonth < 6)
+  {
+   nStartingMonth ++;
+   for (i=0; i<6; i++)
+   {
+    newMonth = (i + nStartingMonth);
+    if (newMonth == monthSelected)
+     txtMonth = "&nbsp;<B>" + monthName[newMonth] + "</B>&nbsp;";
+    else
+     txtMonth = "&nbsp;" + monthName[newMonth] + "&nbsp;";
+    document.getElementById("m"+i).innerHTML = txtMonth;
+   }
+  }
+  bShow=true
+ }
+
+
+ function selectMonth(nMonth) 
+ {
+  monthSelected=parseInt(nMonth+nStartingMonth);
+  monthConstructed=false;
+  constructCalendar();
+  popDownMonth();
+ }
+ 
+ function constructMonth() 
+ {
+  popDownYear()
+  if (!monthConstructed) 
+  {
+
+   sHTML = "<tr><td align='center' onmouseover='this.style.backgroundColor=\"#FFCC99\"' onmouseout='clearInterval(intervalID1);this.style.backgroundColor=\"\"' style='cursor:pointer' onmousedown='clearInterval(intervalID1);intervalID1=setInterval(\"upMonth()\",30)' onmouseup='clearInterval(intervalID1)'>-</td></tr>"
+
+   j=0;
+   i=(monthSelected-3);
+   if(i < 0)
+    i=0;
+   if(i > 6)
+    i=6;
+   nStartingMonth = i;
+   for (ii=0; ii<6; ii++, i++, j++) 
+   {
+    sName = monthName[i];
+    if (i==monthSelected)
+    {
+     sName = "<B>" + sName + "</B>"
+    }
+    sHTML += "<tr><td id='m" + j + "' onmouseover='this.style.backgroundColor=\"#FFCC99\"' onmouseout='this.style.backgroundColor=\"\"' style='cursor:pointer' onclick='selectMonth(" + j + ");event.cancelBubble=true'>&nbsp;" + sName + "&nbsp;</td></tr>"
+   }
+
+   sHTML += "<tr><td align='center' onmouseover='this.style.backgroundColor=\"#FFCC99\"' onmouseout='clearInterval(intervalID2);this.style.backgroundColor=\"\"' style='cursor:pointer' onmousedown='clearInterval(intervalID2);intervalID2=setInterval(\"downMonth()\",30)' onmouseup='clearInterval(intervalID2)'>+</td></tr>"
+
+   document.getElementById("selectMonth").innerHTML = "<table width=32 style='font-family:arial; font-size:11px; border-width:1px; border-style:solid; border-color:#a0a0a0;' bgcolor='#FFFFDD' cellspacing=0 onmouseover='clearTimeout(timeoutID1)' onmouseout='clearTimeout(timeoutID1);timeoutID1=setTimeout(\"popDownMonth()\",100);event.cancelBubble=true'>" + sHTML + "</table>"
+
+   monthConstructed=true
+  }
+ }
+ function popUpMonth() 
+ {
+  constructMonth()
+  crossMonthObj.visibility = (dom||ie)? "visible" : "show"
+  crossMonthObj.left = parseInt(crossobj.left) + 50
+  crossMonthObj.top = parseInt(crossobj.top) + 26
+
+  hideElement( 'SELECT', document.getElementById("selectMonth") );
+  hideElement( 'APPLET', document.getElementById("selectMonth") );   
+ }
+
+ function popDownMonth() 
+ {
+  crossMonthObj.visibility= "hidden"
+ }
+
+ /*** Year Pulldown ***/
+
+ function incYear() 
+ {
+  for (i=0; i<6; i++)
+  {
+   newYear = (i+nStartingYear)+1
+   if (newYear==yearSelected)
+   { 
+    txtYear = "&nbsp;<B>" + newYear + "</B>&nbsp;" 
+   }
+   else
+   { 
+    txtYear = "&nbsp;" + newYear + "&nbsp;" 
+   }
+   document.getElementById("y"+i).innerHTML = txtYear
+  }
+  nStartingYear ++;
+  bShow=true
+ }
+
+ function decYear() 
+ {
+  for (i=0; i<6; i++)
+  {
+   newYear = (i+nStartingYear)-1
+   if (newYear==yearSelected)
+   { 
+    txtYear = "&nbsp;<B>" + newYear + "</B>&nbsp;" 
+   }
+   else
+   { 
+    txtYear = "&nbsp;" + newYear + "&nbsp;" 
+   }
+   document.getElementById("y"+i).innerHTML = txtYear
+  }
+  nStartingYear --;
+  bShow=true
+ }
+
+ function selectYear(nYear) 
+ {
+  yearSelected=parseInt(nYear+nStartingYear);
+  yearConstructed=false;
+  constructCalendar();
+  popDownYear();
+ }
+
+ function constructYear() 
+ {
+  popDownMonth()
+  sHTML = ""
+  if (!yearConstructed) 
+  {
+
+   sHTML = "<tr><td align='center' onmouseover='this.style.backgroundColor=\"#FFCC99\"' onmouseout='clearInterval(intervalID1);this.style.backgroundColor=\"\"' style='cursor:pointer' onmousedown='clearInterval(intervalID1);intervalID1=setInterval(\"decYear()\",30)' onmouseup='clearInterval(intervalID1)'>-</td></tr>"
+
+   j = 0
+   nStartingYear = yearSelected-3
+   for (i=(yearSelected-3); i<(yearSelected+3); i++) 
+   {
+    sName = i;
+    if (i==yearSelected)
+    {
+     sName = "<B>" + sName + "</B>"
+    }
+
+    sHTML += "<tr><td id='y" + j + "' onmouseover='this.style.backgroundColor=\"#FFCC99\"' onmouseout='this.style.backgroundColor=\"\"' style='cursor:pointer' onclick='selectYear("+j+");event.cancelBubble=true'>&nbsp;" + sName + "&nbsp;</td></tr>"
+    j ++;
+   }
+
+   sHTML += "<tr><td align='center' onmouseover='this.style.backgroundColor=\"#FFCC99\"' onmouseout='clearInterval(intervalID2);this.style.backgroundColor=\"\"' style='cursor:pointer' onmousedown='clearInterval(intervalID2);intervalID2=setInterval(\"incYear()\",30)' onmouseup='clearInterval(intervalID2)'>+</td></tr>"
+
+   document.getElementById("selectYear").innerHTML = "<table width=44 style='font-family:arial; font-size:11px; border-width:1px; border-style:solid; border-color:#a0a0a0;' bgcolor='#FFFFDD' onmouseover='clearTimeout(timeoutID2)' onmouseout='clearTimeout(timeoutID2);timeoutID2=setTimeout(\"popDownYear()\",100)' cellspacing=0>" + sHTML + "</table>"
+
+   yearConstructed = true
+  }
+ }
+
+ function popDownYear() 
+ {
+  clearInterval(intervalID1)
+  clearTimeout(timeoutID1)
+  clearInterval(intervalID2)
+  clearTimeout(timeoutID2)
+  crossYearObj.visibility= "hidden"
+ }
+
+ function popUpYear() 
+ {
+  var leftOffset
+
+  constructYear()
+  crossYearObj.visibility = (dom||ie)? "visible" : "show"
+  leftOffset = parseInt(crossobj.left) + document.getElementById("spanYear").offsetLeft
+  if (ie)
+  {
+   leftOffset += 6
+  }
+  crossYearObj.left = leftOffset
+  crossYearObj.top = parseInt(crossobj.top) + 26
+ }
+
+ /*** calendar ***/
+   function WeekNbr(n) 
+   {
+      // Algorithm used:
+      // From Klaus Tondering's Calendar document (The Authority/Guru)
+      // hhtp://www.tondering.dk/claus/calendar.html
+      // a = (14-month) / 12
+      // y = year + 4800 - a
+      // m = month + 12a - 3
+      // J = day + (153m + 2) / 5 + 365y + y / 4 - y / 100 + y / 400 - 32045
+      // d4 = (J + 31741 - (J mod 7)) mod 146097 mod 36524 mod 1461
+      // L = d4 / 1460
+      // d1 = ((d4 - L) mod 365) + L
+      // WeekNumber = d1 / 7 + 1
+ 
+      year = n.getFullYear();
+      month = n.getMonth() + 1;
+      if (startAt == 0) 
+      {
+         day = n.getDate() + 1;
+      }
+      else 
+      {
+         day = n.getDate();
+      }
+ 
+      a = Math.floor((14-month) / 12);
+      y = year + 4800 - a;
+      m = month + 12 * a - 3;
+      b = Math.floor(y/4) - Math.floor(y/100) + Math.floor(y/400);
+      J = day + Math.floor((153 * m + 2) / 5) + 365 * y + b - 32045;
+      d4 = (((J + 31741 - (J % 7)) % 146097) % 36524) % 1461;
+      L = Math.floor(d4 / 1460);
+      d1 = ((d4 - L) % 365) + L;
+      week = Math.floor(d1/7) + 1;
+ 
+      return week;
+   }
+
+ function constructCalendar () 
+ {
+  var aNumDays = Array (31,0,31,30,31,30,31,31,30,31,30,31)
+
+  var dateMessage
+  var startDate = new Date (yearSelected,monthSelected,1)
+  var endDate
+
+  if (monthSelected==1)
+  {
+   endDate = new Date (yearSelected,monthSelected+1,1);
+   endDate = new Date (endDate - (24*60*60*1000));
+   numDaysInMonth = endDate.getDate()
+  }
+  else
+  {
+   numDaysInMonth = aNumDays[monthSelected];
+  }
+
+  datePointer = 0
+  dayPointer = startDate.getDay() - startAt
+  
+  if (dayPointer<0)
+  {
+   dayPointer = 6
+  }
+
+  sHTML = "<table  border=0 style='font-family:verdana;font-size:10px;'><tr>"
+
+  if (showWeekNumber==1)
+  {
+   sHTML += "<td width=27><b>" + weekString + "</b></td><td width=1 rowspan=7 bgcolor='#d0d0d0' style='padding:0px'><img src='"+imgDir+"divider.gif' width=1></td>"
+  }
+
+  for (i=0; i<7; i++) 
+  {
+   sHTML += "<td width='27' align='right'><B>"+ dayName[i]+"</B></td>"
+  }
+  sHTML +="</tr><tr>"
+  
+  if (showWeekNumber==1)
+  {
+   sHTML += "<td align=right>" + WeekNbr(startDate) + "&nbsp;</td>"
+  }
+
+  for ( var i=1; i<=dayPointer;i++ )
+  {
+   sHTML += "<td>&nbsp;</td>"
+  }
+ 
+  for ( datePointer=1; datePointer<=numDaysInMonth; datePointer++ )
+  {
+   dayPointer++;
+   sHTML += "<td align=right>"
+   sStyle=styleAnchor
+   if ((datePointer==odateSelected) && (monthSelected==omonthSelected) && (yearSelected==oyearSelected))
+   { sStyle+=styleLightBorder }
+
+   sHint = ""
+   for (k=0;k<HolidaysCounter;k++)
+   {
+    if ((parseInt(Holidays[k].d)==datePointer)&&(parseInt(Holidays[k].m)==(monthSelected+1)))
+    {
+     if ((parseInt(Holidays[k].y)==0)||((parseInt(Holidays[k].y)==yearSelected)&&(parseInt(Holidays[k].y)!=0)))
+     {
+      sStyle+="background-color:#FFDDDD;"
+      sHint+=sHint==""?Holidays[k].desc:"\n"+Holidays[k].desc
+     }
+    }
+   }
+
+   var regexp= /\"/g
+   sHint=sHint.replace(regexp,"&quot;")
+
+   dateMessage = "onmousemove='window.status=\""+selectDateMessage.replace("[date]",constructDate(datePointer,monthSelected,yearSelected))+"\"' onmouseout='window.status=\"\"' "
+
+   if ((datePointer==dateNow)&&(monthSelected==monthNow)&&(yearSelected==yearNow))
+   { 
+    sHTML += "<b><a "+dateMessage+" title=\"" + sHint + "\" style='"+sStyle+"' href='javascript:dateSelected="+datePointer+";closeCalendar();'><font color=#ff0000>&nbsp;" + datePointer + "</font>&nbsp;</a></b>"
+   }
+   else if (dayPointer % 7 == (startAt * -1)+1)
+   { 
+    sHTML += "<a "+dateMessage+" title=\"" + sHint + "\" style='"+sStyle+"' href='javascript:dateSelected="+datePointer + ";closeCalendar();'>&nbsp;<font color=#909090>" + datePointer + "</font>&nbsp;</a>" 
+   }
+   else
+   { 
+    sHTML += "<a "+dateMessage+" title=\"" + sHint + "\" style='"+sStyle+"' href='javascript:dateSelected="+datePointer + ";closeCalendar();'>&nbsp;" + datePointer + "&nbsp;</a>" 
+   }
+
+   sHTML += ""
+   if ((dayPointer+startAt) % 7 == startAt) 
+   { 
+    sHTML += "</tr><tr>" 
+    if ((showWeekNumber==1)&&(datePointer<numDaysInMonth))
+    {
+     sHTML += "<td align=right>" + (WeekNbr(new Date(yearSelected,monthSelected,datePointer+1))) + "&nbsp;</td>"
+    }
+   }
+  }
+
+  document.getElementById("content").innerHTML   = sHTML
+  document.getElementById("spanMonth").innerHTML = "&nbsp;" + monthName[monthSelected] + "&nbsp;<IMG id='changeMonth' SRC='"+imgDir+"drop1.gif' WIDTH='12' HEIGHT='10' BORDER=0>"
+  document.getElementById("spanYear").innerHTML = "&nbsp;" + yearSelected + "&nbsp;<IMG id='changeYear' SRC='"+imgDir+"drop1.gif' WIDTH='12' HEIGHT='10' BORDER=0>"
+ }
+
+ function popUpCalendar(ctl, ctl2, format) 
+ {
+  var leftpos=0
+  var toppos=0
+
+  if (bPageLoaded)
+  {
+   if ( crossobj.visibility == "hidden" ) 
+   {
+    ctlToPlaceValue = ctl2
+    dateFormat=format;
+
+    formatChar = " "
+    aFormat = dateFormat.split(formatChar)
+    if (aFormat.length<3)
+    {
+     formatChar = "/"
+     aFormat = dateFormat.split(formatChar)
+     if (aFormat.length<3)
+     {
+      formatChar = "."
+      aFormat = dateFormat.split(formatChar)
+      if (aFormat.length<3)
+      {
+       formatChar = "-"
+       aFormat = dateFormat.split(formatChar)
+       if (aFormat.length<3)
+       {
+        // invalid date format
+        formatChar=""
+       }
+      }
+     }
+    }
+
+    tokensChanged = 0
+    if ( formatChar != "" )
+    {
+     // use user's date
+     aData = ctl2.value.split(formatChar)
+
+     for (i=0;i<3;i++)
+     {
+      if ((aFormat[i]=="d") || (aFormat[i]=="dd"))
+      {
+       dateSelected = parseInt(aData[i], 10)
+       tokensChanged ++
+      }
+      else if ((aFormat[i]=="m") || (aFormat[i]=="mm"))
+      {
+       monthSelected = parseInt(aData[i], 10) - 1
+       tokensChanged ++
+      }
+      else if (aFormat[i]=="yyyy")
+      {
+       yearSelected = parseInt(aData[i], 10)
+       tokensChanged ++
+      }
+      else if (aFormat[i]=="mmm")
+      {
+       for (j=0; j<12; j++)
+       {
+        if (aData[i]==monthName[j])
+        {
+         monthSelected=j
+         tokensChanged ++
+        }
+       }
+      }
+      else if (aFormat[i]=="mmmm")
+      {
+       for (j=0; j<12; j++)
+       {
+        if (aData[i]==monthName2[j])
+        {
+         monthSelected=j
+         tokensChanged ++
+        }
+       }
+      }
+     }
+    }
+
+    if ((tokensChanged!=3)||isNaN(dateSelected)||isNaN(monthSelected)||isNaN(yearSelected))
+    {
+     dateSelected = dateNow
+     monthSelected = monthNow
+     yearSelected = yearNow
+    }
+
+    odateSelected=dateSelected
+    omonthSelected=monthSelected
+    oyearSelected=yearSelected
+
+    aTag = ctl
+    do 
+    {
+     aTag = aTag.offsetParent;
+     if(aTag != null)
+     {     
+         leftpos += aTag.offsetLeft;
+         toppos += aTag.offsetTop;
+     }
+    } while(aTag != null&&aTag.tagName!="BODY");
+
+    crossobj.left = fixedX==-1 ? ctl.offsetLeft + leftpos : fixedX
+    crossobj.top = fixedY==-1 ? ctl.offsetTop + toppos + ctl.offsetHeight + 2 : fixedY
+    constructCalendar (1, monthSelected, yearSelected);
+    crossobj.visibility=(dom||ie)? "visible" : "show"
+
+    hideElement( 'SELECT', document.getElementById("calendar") );
+    hideElement( 'APPLET', document.getElementById("calendar") );   
+
+    bShow = true;
+   }
+   else
+   {
+    hideCalendar()
+    if (ctlNow!=ctl) {popUpCalendar(ctl, ctl2, format)}
+   }
+   ctlNow = ctl
+  }
+ }
+
+ document.onkeypress = function hidecal1 () 
+ { 
+  if (event.keyCode==27) 
+  {
+   hideCalendar()
+  }
+ }
+ document.onclick = function hidecal2 () 
+ {   
+  if (!bShow)
+  {
+   hideCalendar()
+  }
+  bShow = false
+ }
+
+ if(ie)
+ {
+  init()
+ }
+ else
+ {
+  window.onload=init
+ }
+		</script>
+	</HEAD>
+	<body class="xpbody">
+		<form name="Form1" method="post" action="PersonnelCardInfo.aspx?FormTypeID=&amp;Module_ID=356&amp;Item_ID=262" id="Form1">
+<div>
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="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" />
+</div>
+
+			<div class="xptop">
+				<h3>
+					個人刷卡信息查詢
+				</h3>
+				<input type="image" name="imb_Back" id="imb_Back" src="../../INC/Images/botm_cancel.gif" alt="返回" style="border-width:0px;" />
+				<input type="image" name="imgbtn_Output" id="imgbtn_Output" src="../../INC/Images/botm_5.gif" alt="Excel輸出" style="border-width:0px;" />
+				<input type="image" name="imgbtn_Query" id="imgbtn_Query" src="../../INC/Images/botm_3.gif" alt="查詢" style="border-width:0px;" />
+			</div>
+			<div class="xpseach">
+				<ul>
+					<li>
+					日期：
+					<li>
+						<input name="txt_CardDate" type="text" value="2019-07-01" id="txt_CardDate" contenteditable="False" onclick="popUpCalendar(this,this,'yyyy-mm-dd')" style="width:100px;cursor:hand" />
+					<li>
+					至
+					<li>
+						<input name="txt_EndDate" type="text" value="2019-07-28" id="txt_EndDate" contenteditable="False" onclick="popUpCalendar(this,this,'yyyy-mm-dd')" style="width:100px;cursor:hand" />
+					<li>
+					是否手工簽卡：
+					<li>
+						<select name="ddl_HankCard" id="ddl_HankCard">
+	<option selected="selected" value="">全部</option>
+	<option value="1">是</option>
+	<option value="0">否</option>
+
+</select></li></ul>
+			</div>
+			<div class="xpcont" style="HEIGHT:370px;">
+				<table class="xptab" cellspacing="0" rules="all" border="1" id="dg_EmpCard" style="width:100%;border-collapse:collapse;">
+	<tr class="xpth">
+		<td style="white-space:nowrap;">ITEM</td><td style="white-space:nowrap;">工號</td><td style="white-space:nowrap;">姓名</td><td>刷卡地點</td><td>刷卡類型</td><td>刷卡日期</td><td>刷卡時間</td><td>采集時間</td>
+	</tr><tr>
+		<td align="center" valign="middle">1</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/01</td><td>07:57:17</td><td>2019/07/01 07:57:33</td>
+	</tr><tr>
+		<td align="center" valign="middle">2</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/01</td><td>18:02:07</td><td>2019/07/01 18:02:37</td>
+	</tr><tr>
+		<td align="center" valign="middle">3</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/02</td><td>07:58:03</td><td>2019/07/02 07:58:21</td>
+	</tr><tr>
+		<td align="center" valign="middle">4</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/02</td><td>18:04:31</td><td>2019/07/02 18:04:47</td>
+	</tr><tr>
+		<td align="center" valign="middle">5</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/03</td><td>07:56:32</td><td>2019/07/03 07:56:51</td>
+	</tr><tr>
+		<td align="center" valign="middle">6</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/03</td><td>18:32:47</td><td>2019/07/03 18:32:57</td>
+	</tr><tr>
+		<td align="center" valign="middle">7</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/04</td><td>07:58:09</td><td>2019/07/04 07:58:19</td>
+	</tr><tr>
+		<td align="center" valign="middle">8</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/04</td><td>17:54:58</td><td>2019/07/04 17:55:25</td>
+	</tr><tr>
+		<td align="center" valign="middle">9</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/04</td><td>19:38:45</td><td>2019/07/04 19:39:09</td>
+	</tr><tr>
+		<td align="center" valign="middle">10</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/05</td><td>07:58:16</td><td>2019/07/05 07:58:35</td>
+	</tr><tr>
+		<td align="center" valign="middle">11</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/05</td><td>17:40:35</td><td>2019/07/05 17:40:44</td>
+	</tr><tr>
+		<td align="center" valign="middle">12</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/06</td><td>08:01:36</td><td>2019/07/06 08:02:00</td>
+	</tr><tr>
+		<td align="center" valign="middle">13</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/06</td><td>17:40:34</td><td>2019/07/06 17:41:07</td>
+	</tr><tr>
+		<td align="center" valign="middle">14</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/06</td><td>19:08:39</td><td>2019/07/06 19:09:03</td>
+	</tr><tr>
+		<td align="center" valign="middle">15</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/06</td><td>19:09:05</td><td>2019/07/06 19:09:34</td>
+	</tr><tr>
+		<td align="center" valign="middle">16</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/08</td><td>07:59:22</td><td>2019/07/08 07:59:57</td>
+	</tr><tr>
+		<td align="center" valign="middle">17</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/08</td><td>17:55:20</td><td>2019/07/08 17:55:43</td>
+	</tr><tr>
+		<td align="center" valign="middle">18</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/09</td><td>07:59:54</td><td>2019/07/09 08:00:10</td>
+	</tr><tr>
+		<td align="center" valign="middle">19</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/09</td><td>18:00:40</td><td>2019/07/09 18:00:49</td>
+	</tr><tr>
+		<td align="center" valign="middle">20</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/09</td><td>19:34:04</td><td>2019/07/09 19:34:32</td>
+	</tr><tr>
+		<td align="center" valign="middle">21</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/10</td><td>07:59:30</td><td>2019/07/10 07:59:49</td>
+	</tr><tr>
+		<td align="center" valign="middle">22</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/10</td><td>18:13:12</td><td>2019/07/10 18:13:28</td>
+	</tr><tr>
+		<td align="center" valign="middle">23</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/11</td><td>07:59:10</td><td>2019/07/11 07:59:45</td>
+	</tr><tr>
+		<td align="center" valign="middle">24</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/11</td><td>18:04:38</td><td>2019/07/11 18:05:09</td>
+	</tr><tr>
+		<td align="center" valign="middle">25</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/12</td><td>07:57:26</td><td>2019/07/12 07:57:46</td>
+	</tr><tr>
+		<td align="center" valign="middle">26</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/12</td><td>19:43:22</td><td>2019/07/12 19:43:34</td>
+	</tr><tr>
+		<td align="center" valign="middle">27</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/13</td><td>08:05:04</td><td>2019/07/13 08:05:33</td>
+	</tr><tr>
+		<td align="center" valign="middle">28</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/13</td><td>17:51:39</td><td>2019/07/13 17:51:48</td>
+	</tr><tr>
+		<td align="center" valign="middle">29</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/15</td><td>07:59:03</td><td>2019/07/15 07:59:42</td>
+	</tr><tr>
+		<td align="center" valign="middle">30</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/15</td><td>18:10:05</td><td>2019/07/15 18:10:26</td>
+	</tr><tr>
+		<td align="center" valign="middle">31</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/16</td><td>07:56:18</td><td>2019/07/16 07:56:29</td>
+	</tr><tr>
+		<td align="center" valign="middle">32</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/16</td><td>18:02:05</td><td>2019/07/16 18:02:27</td>
+	</tr><tr>
+		<td align="center" valign="middle">33</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/16</td><td>19:28:59</td><td>2019/07/16 19:29:08</td>
+	</tr><tr>
+		<td align="center" valign="middle">34</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/17</td><td>07:58:57</td><td>2019/07/17 07:59:25</td>
+	</tr><tr>
+		<td align="center" valign="middle">35</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/17</td><td>18:01:55</td><td>2019/07/17 18:02:09</td>
+	</tr><tr>
+		<td align="center" valign="middle">36</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/18</td><td>07:58:25</td><td>2019/07/18 07:58:53</td>
+	</tr><tr>
+		<td align="center" valign="middle">37</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/18</td><td>19:51:11</td><td>2019/07/18 19:51:31</td>
+	</tr><tr>
+		<td align="center" valign="middle">38</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/19</td><td>07:57:05</td><td>2019/07/19 07:57:38</td>
+	</tr><tr>
+		<td align="center" valign="middle">39</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/19</td><td>20:49:56</td><td>2019/07/19 20:50:08</td>
+	</tr><tr>
+		<td align="center" valign="middle">40</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/19</td><td>21:02:54</td><td>2019/07/19 21:03:22</td>
+	</tr><tr>
+		<td align="center" valign="middle">41</td><td style="white-space:nowrap;">F1235027</td><td style="white-space:nowrap;">蔣維熙</td><td>B23 2F 東側 RF</td><td>考勤</td><td>2019/07/20</td><td>08:24:44</td><td>2019/07/20 08:24:58</td>
+	</tr>
+</table>
+			</div>
+			<div id="div_Page" class="xpage">
+				<TABLE class="page" border="0" cellSpacing="3" cellPadding="0" align="right">
+					<TR>
+						<td><span id="lbl_DataCount">記錄總數: <font color='blue'>41</font> </span><span id="lbl_PageCount">總頁數: <font color='blue'>1</font> </span></td>
+						<td><span id="lbl_CurrentPage">當前頁: <font color='red'>1</font> </span></td>
+						<td><a id="likbtn_First" disabled="disabled">首 頁 </a></td>
+						<td><a id="likbtn_Pervious" disabled="disabled">上一頁</a></td>
+						<td><a id="likbtn_Next" disabled="disabled">下一頁</a></td>
+						<td><a id="likbtn_Last" disabled="disabled">最後頁</a></td>
+						<td>轉到第<input name="txt_PageNum" type="text" id="txt_PageNum" class="xpiut" onkeydown="SetKeyBoardCode('imgbtn_Go')" />頁</td>
+						<td><input type="image" name="imgbtn_Go" id="imgbtn_Go" class="xpgo" src="../../INC/Images/go.gif" alt="跳轉" style="border-width:0px;" /></td>
+					</TR>
+				</TABLE>
+			</div>
+		
+<script type="text/javascript">
+try
+{
+	top.document.getElementById("div_small").style.display="none";
+	top.document.getElementById("div_big").style.display="none";
+}
+catch(ex)
+{
+}
+</script></form>
+	</body>
+</HTML>

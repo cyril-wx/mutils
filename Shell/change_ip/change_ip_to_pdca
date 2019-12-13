@@ -1,0 +1,36 @@
+#!/bin/bash
+
+#***********************************************************
+# Author:              Cyril
+# Date:                2019-11-04
+# FileName:            change_ip_to_pdca
+# version:             1.0
+# Your change info:
+# Description:         Change IP to PDCANetwork
+# Copyright(C):        CoreOS all rihts reserved
+#************************************************************
+
+echo "即将设置工站网络为DHCP自动获取IP..."
+
+expect << EOF
+	spawn su coreosadmin
+	expect { 
+		-re "assword" { send "PASSWORD\r"; exp_continue}
+		-re "bash" { 
+			send "sudo networksetup -setdhcp Ethernet\r" ;
+			send "sudo networksetup -setdnsservers Ethernet empty\r";
+			send "sudo dscacheutil -flushcache \r";
+			send "exit\r";
+			exp_continue
+			}
+		timeout { send_user "Error: 超时错误...\n"; exit 1 }
+		eof { send_user "Error: 执行异常...\n"; exit 2 }
+	}
+EOF
+
+if [ $? = '0' ]; then
+        echo "已成功设置Panic工站为Apple网络!"
+else
+        echo "尝试设置Panic工站为Apple网络失败，请重试！"
+fi
+exit 0

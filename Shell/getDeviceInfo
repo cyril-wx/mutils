@@ -1,0 +1,45 @@
+#!/bin/bash
+
+###############################################################################################################
+######尝试很多办法，最终还是使用shell去匹配cablename和locationid，有新办法请去掉这个文件#######################
+######author:Bruce Yang, mail:blus.c.yang@mail.foxconn.com                              #######################
+###############################################################################################################
+
+
+AllData=`/usr/sbin/system_profiler SPUSBDataType | egrep "DCSD USB UART:|Kanzi:|iPhone|Serial Number:*|Location ID:*|Apple Mobile Device*"`
+#echo "$AllData"
+
+
+newData=`echo "$AllData" | egrep -B5 -A2 "Apple Mobile Device|iPhone:"`
+#echo "newData:$newData"
+
+ibootCount="`echo "$newData" | egrep "Apple Mobile Device" | wc -l`"
+osCount="`echo "$newData" | egrep "iPhone:" | wc -l`"
+totalCount=$(($ibootCount + $osCount))
+returnData=""
+tempData=""
+DevName=""
+LOC=""
+
+#echo "iboot count:$ibootCount, os count:$osCount, total count:$totalCount"
+
+dataI="`echo "$AllData" | egrep -B5 -A2 "Apple Mobile Device|iPhone:"`"
+#echo "`echo "$dataI" | wc -l`"
+dataO="`echo "$AllData" | egrep -B5 -A2 "iPhone:"`"
+cable="`echo "$dataI" | egrep -A1 "DCSD|Kanzi" | sed '/^--*$/d' | awk -F':' '{print $2}' | tr -d '\n'`"
+locationid="`echo "$dataI" | egrep -A2 "Apple Mobile Device|iPhone:" | awk -F':' '{print $2}' | grep "0x" | cut -c 1-11 | tr -d '\n'`"
+
+for (( i=1; i<=$totalCount; i++ )); do
+
+	DevName="`echo "${cable}" | cut -d ' ' -f $(($i+1))`"
+	LOC="`echo "${locationid}" | cut -d ' ' -f $(($i+1))`"
+	
+	tempData="$DevName:$LOC"
+	returnData="$tempData,$returnData"
+	
+done
+info=`echo $returnData | sed 's/.$//' | tr -d '[:cntrl:]'`
+echo $info
+
+
+

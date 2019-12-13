@@ -1,0 +1,70 @@
+#!/bin/bash
+
+echo "========== CopyBurninLogs Bash Script =========="
+echo "|| 1.使用此脚本前需手动跳转机台模式到OS       ||"
+echo "|| 2.使用时应保证只有一个机台在OS模式         ||"
+echo "|| 3.拷贝的burnin log在桌面 burnin_logs 文件夹||"
+echo "================================================"
+
+
+THIS_FILE="copyBurninSysLogs"
+
+# current script PID
+echo "PID of this script: $$"
+
+# close pre tcprelay port.
+ps -ef | grep '10000 873 23' | awk -F ' ' '{print $2}' | xargs kill -9 
+
+# open new tcprelay port
+tcprelay --portoffset 10000 873 23 ssh scp &
+
+/usr/bin/expect -c '
+	set timeout 60;
+	spawn ssh root@localhost -p 10022
+	expect {
+	        -re "Invalid|fail" { exit 1 }
+	        -re "Are you sure you want to continue connecting" { send "yes\r" ; exp_continue }
+	        -re "assword:" { send "alpine\r"; exp_continue }
+		-re ".tar.gz" { exit 0 }
+		-re "root#" { 
+			send "defaults write com.apple.sysdiagnose factoryDisable -bool FALSE\r";
+			send "sysdiagnose\r";
+			exp_continue }
+	        timeout { send_user "timeout..."; exit 255 }
+	        eof { send_user "eof..."; exit 256 }
+	}'
+
+# 拷贝 burnin log
+
+/usr/bin/expect -c '
+	set timeout 100;
+	spawn scp -r -P 10022 root@localhost:/private/var/logs /Users/gdlocal/Desktop/burnin_logs
+	expect {
+		-re "Are you sure you want to continue connecting" { send "yes\r" ; exp_continue }
+		-re "assword:" { send "alpine\r"; exp_continue }
+		-re "root#" { exit 0 }
+	}'
+
+/usr/bin/expect -c '
+	set timeout 100;
+	spawn scp -r -P 10022 root@localhost://var/mobile/Library/Logs/CrashReporter/DiagnosticLogs/sysdiagnose/sysdiagnose_*.tar.gz /Users/gdlocal/Desktop/
+        expect {
+                -re "Are you sure you want to continue connecting" { send "yes\r" ; exp_continue }
+                -re "assword:" { send "alpine\r"; exp_continue }
+                -re "root#" { exit 0 }
+        }'
+
+
+# close tcprelay port.
+ps -ef | grep '10000 873 23' | awk -F ' ' '{print $2}' | xargs kill -9 
+
+# clear hosts
+echo "" > ~/.ssh/known_hosts
+
+# Finish
+echo "Finish"
+
+# If everything passed, close the terminal window and exit
+# osascript -e 'tell application "Terminal" to close (every window whose name contains "'"$THIS_FILE"'")' &
+
+exit 0

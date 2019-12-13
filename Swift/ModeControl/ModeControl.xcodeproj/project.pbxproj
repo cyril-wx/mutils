@@ -1,0 +1,360 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		41AAAC4F2220E31B002D03D6 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AAAC4E2220E31B002D03D6 /* main.swift */; };
+		41AAAC742220E3A9002D03D6 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41AAAC732220E3A9002D03D6 /* Constants.swift */; };
+		41AAAC7C2220E4AA002D03D6 /* handle_diags.c in Sources */ = {isa = PBXBuildFile; fileRef = 41AAAC782220E4A9002D03D6 /* handle_diags.c */; };
+		41AAAC7D2220E4AA002D03D6 /* serial_control.c in Sources */ = {isa = PBXBuildFile; fileRef = 41AAAC792220E4A9002D03D6 /* serial_control.c */; };
+		41AAAC7E2220E4AA002D03D6 /* format_log.c in Sources */ = {isa = PBXBuildFile; fileRef = 41AAAC7B2220E4AA002D03D6 /* format_log.c */; };
+		41AAAC802220E4F2002D03D6 /* fixture_control.m in Sources */ = {isa = PBXBuildFile; fileRef = 41AAAC7F2220E4F2002D03D6 /* fixture_control.m */; };
+		41AAAC8A2220E9B6002D03D6 /* MyScanf.c in Sources */ = {isa = PBXBuildFile; fileRef = 41AAAC892220E9B6002D03D6 /* MyScanf.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		41AAAC492220E31B002D03D6 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		41AAAC4B2220E31B002D03D6 /* ModeControl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ModeControl; sourceTree = BUILT_PRODUCTS_DIR; };
+		41AAAC4E2220E31B002D03D6 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		41AAAC562220E35C002D03D6 /* ModeControl-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ModeControl-Bridging-Header.h"; sourceTree = "<group>"; };
+		41AAAC732220E3A9002D03D6 /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		41AAAC752220E4A9002D03D6 /* handle_diags.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = handle_diags.h; sourceTree = "<group>"; };
+		41AAAC762220E4A9002D03D6 /* fixture_control.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fixture_control.h; sourceTree = "<group>"; };
+		41AAAC772220E4A9002D03D6 /* serial_control.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = serial_control.h; sourceTree = "<group>"; };
+		41AAAC782220E4A9002D03D6 /* handle_diags.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = handle_diags.c; sourceTree = "<group>"; };
+		41AAAC792220E4A9002D03D6 /* serial_control.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = serial_control.c; sourceTree = "<group>"; };
+		41AAAC7A2220E4AA002D03D6 /* format_log.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = format_log.h; sourceTree = "<group>"; };
+		41AAAC7B2220E4AA002D03D6 /* format_log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = format_log.c; sourceTree = "<group>"; };
+		41AAAC7F2220E4F2002D03D6 /* fixture_control.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = fixture_control.m; sourceTree = "<group>"; };
+		41AAAC882220E9B6002D03D6 /* MyScanf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MyScanf.h; sourceTree = "<group>"; };
+		41AAAC892220E9B6002D03D6 /* MyScanf.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = MyScanf.c; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		41AAAC482220E31B002D03D6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		41AAAC422220E31B002D03D6 = {
+			isa = PBXGroup;
+			children = (
+				41AAAC4D2220E31B002D03D6 /* ModeControl */,
+				41AAAC4C2220E31B002D03D6 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		41AAAC4C2220E31B002D03D6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				41AAAC4B2220E31B002D03D6 /* ModeControl */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		41AAAC4D2220E31B002D03D6 /* ModeControl */ = {
+			isa = PBXGroup;
+			children = (
+				41AAAC812220E727002D03D6 /* Utils */,
+				41AAAC552220E346002D03D6 /* LowLevelSource */,
+				41AAAC4E2220E31B002D03D6 /* main.swift */,
+				41AAAC732220E3A9002D03D6 /* Constants.swift */,
+			);
+			path = ModeControl;
+			sourceTree = "<group>";
+		};
+		41AAAC552220E346002D03D6 /* LowLevelSource */ = {
+			isa = PBXGroup;
+			children = (
+				41AAAC7F2220E4F2002D03D6 /* fixture_control.m */,
+				41AAAC762220E4A9002D03D6 /* fixture_control.h */,
+				41AAAC7B2220E4AA002D03D6 /* format_log.c */,
+				41AAAC7A2220E4AA002D03D6 /* format_log.h */,
+				41AAAC782220E4A9002D03D6 /* handle_diags.c */,
+				41AAAC752220E4A9002D03D6 /* handle_diags.h */,
+				41AAAC792220E4A9002D03D6 /* serial_control.c */,
+				41AAAC772220E4A9002D03D6 /* serial_control.h */,
+				41AAAC562220E35C002D03D6 /* ModeControl-Bridging-Header.h */,
+			);
+			path = LowLevelSource;
+			sourceTree = "<group>";
+		};
+		41AAAC812220E727002D03D6 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				41AAAC842220E961002D03D6 /* Shell_C_API */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		41AAAC842220E961002D03D6 /* Shell_C_API */ = {
+			isa = PBXGroup;
+			children = (
+				41AAAC882220E9B6002D03D6 /* MyScanf.h */,
+				41AAAC892220E9B6002D03D6 /* MyScanf.c */,
+			);
+			path = Shell_C_API;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		41AAAC4A2220E31B002D03D6 /* ModeControl */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 41AAAC522220E31B002D03D6 /* Build configuration list for PBXNativeTarget "ModeControl" */;
+			buildPhases = (
+				41AAAC472220E31B002D03D6 /* Sources */,
+				41AAAC482220E31B002D03D6 /* Frameworks */,
+				41AAAC492220E31B002D03D6 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ModeControl;
+			productName = ModeControl;
+			productReference = 41AAAC4B2220E31B002D03D6 /* ModeControl */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		41AAAC432220E31B002D03D6 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 0940;
+				LastUpgradeCheck = 0940;
+				ORGANIZATIONNAME = coreos;
+				TargetAttributes = {
+					41AAAC4A2220E31B002D03D6 = {
+						CreatedOnToolsVersion = 9.4.1;
+						LastSwiftMigration = 0940;
+					};
+				};
+			};
+			buildConfigurationList = 41AAAC462220E31B002D03D6 /* Build configuration list for PBXProject "ModeControl" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 41AAAC422220E31B002D03D6;
+			productRefGroup = 41AAAC4C2220E31B002D03D6 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				41AAAC4A2220E31B002D03D6 /* ModeControl */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		41AAAC472220E31B002D03D6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				41AAAC802220E4F2002D03D6 /* fixture_control.m in Sources */,
+				41AAAC7D2220E4AA002D03D6 /* serial_control.c in Sources */,
+				41AAAC7E2220E4AA002D03D6 /* format_log.c in Sources */,
+				41AAAC742220E3A9002D03D6 /* Constants.swift in Sources */,
+				41AAAC7C2220E4AA002D03D6 /* handle_diags.c in Sources */,
+				41AAAC8A2220E9B6002D03D6 /* MyScanf.c in Sources */,
+				41AAAC4F2220E31B002D03D6 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		41AAAC502220E31B002D03D6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		41AAAC512220E31B002D03D6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		41AAAC532220E31B002D03D6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "ModeControl/LowLevelSource/ModeControl-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 4.0;
+			};
+			name = Debug;
+		};
+		41AAAC542220E31B002D03D6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "ModeControl/LowLevelSource/ModeControl-Bridging-Header.h";
+				SWIFT_VERSION = 4.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		41AAAC462220E31B002D03D6 /* Build configuration list for PBXProject "ModeControl" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41AAAC502220E31B002D03D6 /* Debug */,
+				41AAAC512220E31B002D03D6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		41AAAC522220E31B002D03D6 /* Build configuration list for PBXNativeTarget "ModeControl" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				41AAAC532220E31B002D03D6 /* Debug */,
+				41AAAC542220E31B002D03D6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 41AAAC432220E31B002D03D6 /* Project object */;
+}

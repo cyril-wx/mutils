@@ -1,0 +1,55 @@
+#!/usr/bin/expect -f
+# *****************************************************	#
+# @Author: Cyril					#
+# @Create: 19/01/28					#
+# This is a auto script for marvin factory grabbing	#
+# ***************************************************** #
+## 判断参数个数, FAIL: return 1
+##		 PASS: continue
+if {$argc!=8} {
+	regsub ".*/" $::argv0 "" name
+	send_user "Error: Param quantity incorrect. \n"
+	send_user "usage: $argv0 Probe Build_Phase HW_Type SW_Bundle Test Screen Config SN ... \n"
+	exit 1
+}
+
+##永不超时
+#set timeout -1 	
+set Probe [lindex $argv 0]
+set Build_Phase  [lindex $argv 1]
+set HW_Type  [lindex $argv 2]
+set SW_Bundle  [lindex $argv 3]
+set Test  [lindex $argv 4]
+set Screen  [lindex $argv 5]
+set Config  [lindex $argv 6]
+set SN  [lindex $argv 7]
+set HostIP [lindex $argv 8]
+
+set prompt "gdlocal$"
+# 一般marvin抓取不会超过一个小时，但是iEFI panic抓取时间会超长
+set timeout 7200
+
+spawn marvin factory
+expect {
+	-re "Select probe or 'q':" {exp_send "$Probe\r"; exp_continue}
+	-re "Build Phase:" {send "$Build_Phase\r"; exp_continue}
+	-re "HW Type:" {send "$HW_Type\r"; exp_continue}
+	-re "SW Bundle:" {send "$SW_Bundle\r"; exp_continue}
+	-re "Test:" {send "$Test\r"; exp_continue}
+	-re "Screen:" {send "$Screen\r"; exp_continue}
+	-re "Config:" {send "$Config\r"; exp_continue}
+	-re "S/N:" {send "$SN\r";  exp_continue}
+	-re "HostIP:" { send "$HostIP\r"; exp_continue }
+	-re "!adios!" { send_user "Finish."; exit}
+	-re "ERROR: marvin crashed" { send_error "marvin crashed"; exit }
+    eof {
+        send_user "EOF finish.\r"
+        exit
+    }
+    timeout {
+        send_error "Timeout...exit.\r" ;
+        exit
+    }
+}
+#interact
+##expect脚本必须以interact或expect eof结束

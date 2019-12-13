@@ -1,0 +1,7 @@
+Metadata-Version: 1.1
+Name: ptyprocess
+Version: 0.6.0
+Summary: Run a subprocess in a pseudo terminal
+Home-page: https://github.com/pexpect/ptyprocess
+Author: Thomas Kluyver
+Author-email: thomas@kluyver.me.uk

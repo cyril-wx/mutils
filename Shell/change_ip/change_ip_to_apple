@@ -1,0 +1,110 @@
+#!/bin/bash
+
+#***********************************************************
+# Author:              Cyril
+# Date:                2019-11-04
+# FileName:            change_ip_to_apple
+# version:             1.0
+# Your change info:
+# Description:         Change IP to AppleNetwork
+# Copyright(C):        CoreOS all rihts reserved
+#************************************************************
+
+
+IP="17.81.142.19"
+MASK="255.255.255.0"
+GATEWAY="17.81.142.1"
+DNS1="17.85.160.163"
+DNS2="17.85.160.164"
+
+file="/Users/gdlocal/ip_config.txt"
+echo "即将设置工站网络为Apple固定IP..."
+
+if [ ! -f ${file} ];then
+# 如果配置文件不存在则手动配置
+	echo "请重新设置信息："
+	read -p "IP: " -a IP
+	read -p "MASK: " -a MASK
+	read -p "GATEWAY: " -a GATEWAY
+	read -p "DNS1: " -a DNS1
+	read -p "DNS2: " -a DNS2
+	echo "设置完毕...自动保存配置到文件: ${file}"
+	echo "
+IP=$IP
+MASK=$MASK
+GATEWAY=$GATEWAY
+DNS1=$DNS1
+DNS2=$DNS2
+" > ${file}
+
+else
+	for line in `cat $file`; do
+		l=${line%*:}
+		r=${line#*:}
+		
+		case $l in
+		"IP")
+			IP=$r ;;
+		"MASK")
+			MASK=$r ;;
+		"GATEWAY")
+			GATEWAY=$r ;;
+		"DNS1")
+			DNS1=$r ;;
+		esac
+	done
+	
+	echo "================================="
+	echo "IP:               ${IP}"
+	echo "MASK:             ${MASK}"
+	echo "GATEWAY:	  ${GATEWAY}"
+	echo "DNS1:             ${DNS1}"
+	echo "DNS2:             ${DNS2}"
+	echo "================================="
+	read -p "请确认以上信息是否正确(y/n)? " -a RES
+	if [ ${RES} != "y" ]; then
+		echo "请重新设置信息："
+		read -p "IP: " -a IP
+		read -p "MASK: " -a MASK
+		read -p "GATEWAY: " -a GATEWAY
+		read -p "DNS1: " -a DNS1
+		read -p "DNS2: " -a DNS2
+		echo "设置完毕...自动保存配置文件:${file}"
+		echo "
+${IP}
+${MASK}
+${GATEWAY}
+${DNS1}
+${DNS2}" > ${file}
+	fi
+
+fi
+
+echo "开始设置Apple网络..."
+expect << EOF
+	set IP ${IP}
+	set MASK ${MASK}
+	set GATEWAY ${GATEWAY}
+	set DNS1 ${DNS1}
+	set DNS2 ${DNS2}
+	spawn su coreosadmin
+	expect { 
+		-re "assword:" { send "PASSWORD\r" ; exp_continue } 
+		-re "bash(.*)" { 
+			send "sudo networksetup -setmanual Ethernet ${IP} ${MASK} ${GATEWAY} \r" ;
+			send "sudo networksetup -setdnsservers Ethernet ${DNS1} ${DNS2}\r" ;
+			send "sudo dscacheutil -flushcache\r";
+			send "exit\r";
+			exp_continue
+		}
+		timeout { send_user "Error: 超时错误...\n"; exit 1 }
+		eof { send_user "Error: 执行异常...\n"; exit 2 }
+	}
+EOF
+
+if [ $? = '0' ]; then
+	echo "已成功设置Panic工站为Apple网络!"
+else
+	echo "尝试设置Panic工站为Apple网络失败，请重试！"
+fi
+exit 0

@@ -1,5 +1,5 @@
 #!/bin/bash
-# 本脚本用于检测刷机是否完成，如果完成继续下一步命令，如果未完成则退出。
+
 parent_path="/Users/gdlocal/Library/Application Support/PurpleRabbit/Logs"
 log_filename="host.log"
 skey="0x1A*"

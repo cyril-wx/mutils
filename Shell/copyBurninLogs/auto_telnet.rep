@@ -1,0 +1,60 @@
+#!/usr/bin/expect 
+
+# ****************************************
+# @Author: Cyril
+# @Create: 19/02/23
+# This is a auto script for exec telnet connection
+# Usage: ./auto_telnet.rep <TelnetPort> <OSCMD_len>
+# ****************************************
+
+if {$argc<2 } {
+        send_user "Error: Parameters incorrect \n"
+        send_user "Usage: ./auto_telnet.rep <TelnetPort> <OSCMD_len> <OSCMD 1> <OSCMD 2> * * *\n"
+        exit
+}
+
+set TelnetPort [lindex $argv 0]
+set OSCMD_len [lindex $argv 1]
+
+set param_num [expr {$argc-2}]
+if { $OSCMD_len!=$param_num } {
+	send_user "Parameters num incorrect \n"
+	exit
+}
+
+## -1 means never timeout
+set timeout -1
+
+set user "root"
+set pwd "alpine"
+#set user "gdlocal"
+#set pwd "gdlocal"
+
+set prompt "iPhone:~ root#"
+
+#send_tty命令用来实现在终端上显示提示符字串
+#send_tty "$prompt"
+
+set timeout 30
+spawn ./telnet localhost $TelnetPort
+set i 2
+expect {
+	-re "Are you sure you want to continue connecting (yes/no)?" { send "yes\r"; exp_continue}
+	-re "login:" { send "$user\r"; exp_continue}
+	-re "assword:" { send "$pwd\r\n";  }
+}	
+
+expect {
+	-re "$prompt" { 
+		send "[lindex $argv $i] \r"; 
+		set i [ expr {$i + 1} ];
+		if { $i < $argc } {
+			exp_continue
+		} else {
+			## do nothing	
+		}
+	}
+}	
+
+interact
+#expect eof

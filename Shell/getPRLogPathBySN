@@ -1,0 +1,10 @@
+#!/bin/bash
+#!/bin/bash
+parent_path="/Users/gdlocal/Library/Application Support/PurpleRabbit/Logs"
+SN=$1
+
+cd $parent_path
+# 查找所有SN Log文件夹，按时间排序并取最新一行数据(即最新的Log文件夹)，获取该行最后一列（即Log文件路径）
+logpath = `find . -iname "$SN" | xargs ls -lta | head -n 1 | awk -F ' ' '{print $NF}'`
+
+echo logpath

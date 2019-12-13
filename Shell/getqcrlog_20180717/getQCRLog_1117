@@ -1,0 +1,69 @@
+#!/bin/bash
+
+WOSID=""
+USER_NAME="blus.c"
+PASS_WORD="bruce66"
+Original_ip="http://10.172.5.131"
+Father_url="http://10.172.5.131/cgi-bin/WebObjects/QCR"
+Referer_url="${Father_url}"
+new_ip=""
+temp_file="/tmp/1.txt"
+User_Agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:45.0) Gecko/20100101 Firefox/45.0"
+Accept_type="text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+Accept_lang="zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3"
+####need to format time like this "08%2F25%2F2016" and "04%3A00"
+#Start_Data="`echo $1 | sed 's/\//%2F/g'`"
+#End_Data="`echo $3 | sed 's/\//%2F/g'`"
+#Start_Time="`echo $2 | sed 's/:/%3A/g'`"
+#End_Time="`echo $4 | sed 's/:/%3A/g'`"
+#Start_Data="09%2F05%2F2016"
+#End_Data="09%2F05%2F2016"
+#Start_Time="04%3A00"
+#End_Time="11%3A00"
+Line_id="C06-3FP-04A"
+Production_type="D11"
+Production_type_d111="D111"
+Log_file="/tmp/result.csv"
+SN_File="${1}"
+Log_Out_Put="./QCR_LOG"
+Targit_log="${2}"
+
+
+#set -x
+
+if [ -e ${temp_file} ]; then
+rm "${temp_file}"
+echo "rm temp file"
+fi
+
+
+##### to get wosid / version / username / password
+##### will get like this "/cgi-bin/WebObjects/QCR.woa/5/wo/WF1v5H70ahqXnwgdVxJeJw/0.3.7.5"
+#### input username and password
+curl "${Father_url}" -H 'Host: 10.172.5.131' -H "User-Agent: ${User_Agent}" -H "Accept: ${Accept_type}" -H "Accept-Language: ${Accept_lang}" --compressed -H 'Connection: keep-alive' > ${temp_file}
+#curl "${Father_url}" -H 'Host: 10.172.5.131' -A "${User_Agent}" -H "Accept: ${Accept_type}" -H "Accept-Language: ${Accept_lang}" --compressed -H 'Connection: keep-alive' > ${temp_file}
+
+button_name="`cat "${temp_file}" | grep -i "input name" | awk -F'"' '{printf $10}'`"
+new_ip="`cat "${temp_file}" | grep -i 'method="post"' | awk -F'"' '{printf $6}'`"
+WOSID="`cat "${temp_file}" | grep -i 'method="post"' | awk -F'"' '{printf $6}' | awk -F'/' '{printf $7}'`"
+curl "${Original_ip}${new_ip}" -H 'Host: 10.172.5.131' -H "User-Agent: ${User_Agent}" -H "Accept: ${Accept_type}" -H "Accept-Language: ${Accept_lang}" --compressed -H "Referer: ${Referer_url}" -H 'Connection: keep-alive' --data "UserName=${USER_NAME}&Password=${PASS_WORD}&${button_name}.x=37&${button_name}.y=7&wosid=${WOSID}" > ${temp_file}
+
+Search_url="`cat ${temp_file} | grep "search_links" -B1 | awk -F'"' '{print $6}' | tr -d '[:cntrl:]'`"
+
+cat "${SN_File}" | while read Serial_Number
+do
+	#echo "Serial_Number=$Serial_Number"
+	#echo "Search_url=$Search_url"
+	curl -q "${Original_ip}${Search_url}" -H 'Host: 10.172.5.131' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:45.0) Gecko/20100101 Firefox/45.0' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' -H 'Accept-Language: zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3' --compressed -H "Referer: ${Referer_url}" -H 'Connection: keep-alive' --data "1.5.5.29.1=${Serial_Number}&1.5.5.29.3=Search&wosid=${WOSID}" > ${temp_file}
+	#exit 0
+	View_Log_Url="`cat ${temp_file} | grep "View Process Logs" | awk -F'"' '{print $4}' | head -1 | tr -d '[:cntrl:]'`"	
+	curl -q "${Original_ip}${View_Log_Url}" -H 'Host: 10.172.5.131' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:45.0) Gecko/20100101 Firefox/45.0' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' -H 'Accept-Language: zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3' --compressed -H "Referer: ${Referer_url}" -H 'Connection: keep-alive' -H 'Cache-Control: max-age=0' > ${temp_file}
+	cat ${temp_file} | grep "${Targit_log}" | awk -F'"' '{print $3}' | awk -F'<' '{print $1}' | sed 's/>//g' | while read SS_LOG_Name
+	do
+		SS_LOG_Url="`cat ${temp_file} | grep "${SS_LOG_Name}" -A9 | tail -1 | awk -F'"' '{print $4}' | tr -d '[:cntrl:]'`"
+		echo $SS_LOG_Name:$SS_LOG_Url
+		echo "logname=$Log_Out_Put/$SS_LOG_Name"
+		curl -s --create-dirs "${Original_ip}${SS_LOG_Url}?$(($RANDOM%8+1)),$(($RANDOM%8+1))" -H 'Host: 10.172.5.131' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:45.0) Gecko/20100101 Firefox/45.0' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' -H 'Accept-Language: zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3' --compressed -H "Referer: ${Referer_url}" -H 'Connection: keep-alive' -o "${Log_Out_Put}/${SS_LOG_Name}"
+		echo "****get sn:${Serial_Number} log return[$?]"
+	done
+done

@@ -1,0 +1,40 @@
+#!/usr/bin/expect -f
+# ***************************************
+# @Author: Cyril						#
+# @Create: 19/03/04						#
+# This is only for get marvin ProbeID	#
+# ***************************************
+
+set LocId [lindex $argv 0]
+set TcpPort [lindex $argv 1]
+set TelnetExpPath [lindex $argv 2]
+set OS_CMD [lindex $argv 3]
+
+set timeout 5
+set TelnetPort [expr {$TcpPort + 23}]
+set prompt "gdlocal$"
+
+spawn /usr/local/bin/tcprelay --locationid $LocId --portoffset $TcpPort 873 23
+expect {
+	timeout {
+		send_user "Timeout..."
+		set timeout 1000
+		spawn $TelnetExpPath $TelnetPort 1 $OS_CMD
+		expect {
+			timeout {
+				send_user "./auto_telnet.exp Timeout...finish."
+			}
+			eof {
+				send_user "./auto_telnet.exp...finish."
+			}
+		}
+		send_user "./tcprelay.exp...finish."
+	}
+	eof {
+		send_user "EOF exit."
+	}
+}
+
+
+
+

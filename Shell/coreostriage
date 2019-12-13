@@ -1,0 +1,37 @@
+#! /usr/bin/expect
+#Select probe or 'q':  Build Phase:  HW Type:  SW Bundle: Test:	Screen: Config: SN:
+set timeout 3000
+if {$argc!=8} {
+	puts stderr "Usage: $argv0 probe build bundle teststation config srnm\n "
+	exit 1
+}
+set ProbeID [lrange $argv 0 0]
+set BuildPhase [lrange $argv 1 1]
+set HWType [lrange $argv 2 2]
+set SWBundle [lrange $argv 3 3]
+set Test [lrange $argv 4 4]
+set Screen [lrange $argv 5 5]
+set Config [lrange $argv 6 6]
+set SN [lrange $argv 7 7]
+
+send_user "ProbeID=$ProbeID\nBuildPhase=$BuildPhase\nHWType=$HWType\nSWBundle=$SWBundle\nTest=$Test\nScreen=$Screen\nConfig=$Config\nSN=$SN\n"
+spawn marvin factory
+expect "Select probe or 'q': "
+send "$ProbeID\n"
+expect "Build Phase: "
+send "$BuildPhase\n"
+expect "HW Type: "
+send "$HWType\n"
+expect "SW Bundle: "
+send "$SWBundle\n"
+expect "Test: "
+send "$Test\n"
+expect "Screen: "
+send "$Screen\n"
+expect "Config: "
+send "$Config\n"
+expect "S/N: "
+send "$SN\n"
+expect "eof"
+
+

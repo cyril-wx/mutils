@@ -1,0 +1,105 @@
+#!/bin/bash
+#"this script need a argument which is the device log of DCSD."
+
+if [[ "${1}" == "" ]]; then
+	echo " this script need a argument which is the device log of DCSD."
+	exit 1
+fi
+
+File_Name="./.runtime.temp"
+LogFile="./runtime.csv"
+if [ -f "$File_Name" ] ; then 
+	rm $File_Name
+	rm $LogFile
+fi
+
+cat $1 | egrep 'CHECKPOINT BEGIN|CHECKPOINT END' >> $File_Name
+
+Begin_Time=""
+End_Time=""
+Begin_Time_Integer=""
+End_Time_Integer=""
+Begin_Time_Decimal=""
+End_Time_Decimal=""
+option_Name_b=""
+option_Name_e=""
+Time_Decimal=""
+Has_Begin=0
+interval_integer=0
+interval_decimal=0
+interval_time=0
+begin_stuff=()
+Sub_Option="N/A"
+Father_Option=""
+Father_Option_BTime=""
+Father_Option_ETime=""
+IS_SUB=0
+Total_time=0
+#echo $PWD
+#echo $File_Name
+echo "Option_Name, Sub_Option, Begin_Time, End_Time, Interval(s)" >> $LogFile
+
+#cat ${File_Name} | while read line
+while read line
+do
+	#echo $line | awk -F' ' '{print $1, $4, $6}'
+	Temp="$line"
+	Is_Begin="`echo ${Temp} | cut -d ' ' -f 4 | tr -d '[:cntrl:]'`"
+	if [[ "${Is_Begin}" == "BEGIN:" ]]; then
+		if [ "${Has_Begin}" -eq "1" ]; then 
+			##it will run when hit "BEGIN: BEGIN:" 
+			IS_SUB=1;
+			Father_Option="${option_Name_b}"
+			Father_Option_BTime="${Begin_Time}"
+			printf " %-30s, %-25s, %-15s, %-15s, %-10s\n" "${Father_Option}" "${Sub_Option}" "${Father_Option_BTime}" "N/A" "N/A" >> $LogFile
+		fi
+		Begin_Time="`echo ${Temp} | cut -d ' ' -f 1 | tr -d '[][:cntrl:]'`"
+		option_Name_b="`echo ${Temp} | cut -d ' ' -f 6 | tr -d '[][:cntrl:]'`"
+		if [[ -z ${Begin_Time} ]]; then
+			echo "${option_Name_b}'s time is null!"
+		fi
+		Begin_Time_Integer="`echo ${Begin_Time} | awk -F'.' '{print $1}' | tr -d '[:cntrl:]'`"
+		Begin_Time_Decimal="0.`echo ${Begin_Time} | awk -F'.' '{print $2}' | tr -d '[:cntrl:]'`"
+		Has_Begin=1
+	elif [[ "${Is_Begin}" == "END:" ]]; then
+		#date -j -f %H:%M:%S 12:44:59 +%s
+		End_Time="`echo ${Temp} | cut -d ' ' -f 1 | tr -d '[][:cntrl:]'`"
+		option_Name_e="`echo ${Temp} | cut -d ' ' -f 6 | tr -d '[][:cntrl:]'`"
+		if [[ -z ${End_Time} ]]; then
+			echo "${option_Name_e}'s time is null!"
+		fi
+		End_Time_Integer="`echo ${End_Time} | awk -F'.' '{print $1}' | tr -d '[:cntrl:]'`"
+		End_Time_Decimal="0.`echo ${End_Time} | awk -F'.' '{print $2}' | tr -d '[:cntrl:]'`"
+		if [[ "$option_Name_b" == "$option_Name_e" ]]; then
+			#echo "0.987 - 0.981 + 1" | bc
+			interval_integer=$(expr `date -j -f %H:%M:%S $End_Time_Integer +%s` - `date -j -f %H:%M:%S $Begin_Time_Integer +%s`)
+			#interval_time="`echo "${End_Time_Decimal} - ${Begin_Time_Decimal} + ${interval_integer}" | bc | tr -d '[:cntrl]'`"
+			interval_time="`echo "${End_Time_Decimal} - ${Begin_Time_Decimal} + ${interval_integer}" | bc | tr -d '[:cntrl]'`"
+			#echo "sum=$Total_time"
+			Total_time="`echo "${Total_time} + ${interval_time}" | bc | tr -d '[:cntrl:]'`" 
+			if [[ "`echo ${interval_time} | cut -c 1 | tr -d '[:cntrl:]'`" == "." ]]; then
+				interval_time="0${interval_time}"
+			fi
+			if [ "${IS_SUB}" -eq "1" ]; then 
+				printf " %-30s, %-25s, %-15s, %-15s, %-10s\n" "${Father_Option}" "${option_Name_e}" "${Begin_Time}" "${End_Time}" "${interval_time}" >> $LogFile
+				printf " %-30s, %-25s, %-15s, %-15s, %-10s\n" "${Father_Option}" "${option_Name_e}" "${Begin_Time}" "${End_Time}" "${interval_time}"
+			else
+				printf " %-30s, %-25s, %-15s, %-15s, %-10s\n" "${option_Name_e}" "${Sub_Option}" "${Begin_Time}" "${End_Time}" "${interval_time}" >> $LogFile 
+				printf " %-30s, %-25s, %-15s, %-15s, %-10s\n" "${option_Name_e}" "${Sub_Option}" "${Begin_Time}" "${End_Time}" "${interval_time}" 
+			fi
+
+		else
+			##if we got here, it said father option has end.
+			IS_SUB=0
+			printf " %-30s, %-25s, %-15s, %-15s, %-10s\n" "${option_Name_e}" "${Sub_Option}" "N/A" "${End_Time}" "N/A" >> $LogFile
+			printf " %-30s, %-25s, %-15s, %-15s, %-10s\n" "${option_Name_e}" "${Sub_Option}" "N/A" "${End_Time}" "N/A" 
+		fi
+		Has_Begin=0
+
+	else
+		continue
+	fi
+done < ${File_Name}
+
+printf "Total Time=%-10s\n" "${Total_time}" >> $LogFile
+printf "******************** Total Time=%-10s ******************\n" "${Total_time}"

@@ -1,0 +1,19 @@
+#!/usr/bin/expect -f
+# ***************************************
+# @Author: Cyril						#
+# @Create: 19/03/04						#
+# This is only for get marvin ProbeID	#
+# ***************************************
+
+set timeout 5
+
+spawn marvin factory
+expect {
+	-re "Select probe or 'q':" {
+		send_user "q\r";
+		exit 0 }
+	eof {}
+}
+
+
+
