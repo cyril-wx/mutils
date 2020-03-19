@@ -1,0 +1,83 @@
+#!/bin/bash
+
+#******************************************************************************
+# This script is used for collect unit sysdiagnose log under os mode
+#------------------------------------------------------------------------------
+# @Author: Cyril
+# @Create: 2020-03-18
+# @Tips: 1. To using this script, please closing nanokdp/nanocom terminal first.
+#       2. Please using kanzi-cable
+#       3. Only one unit could be plugged in station
+# @Usage: $ ./run_iboot_cmd.sh $probeName (such as:30F014)
+# @Copyright: FX-CoreOS
+#******************************************************************************
+
+tcprelay_log_path="./tcprelay.log"
+log_path="./run_sysdiagnose_cmd.log"
+
+#force_kill_tcprelay_cmd
+ps -ef | grep "tcprelay --portoffset 10000 873 23" | grep -v "grep" | awk -F ' ' '{print $2}' | xargs kill -9 &>$log_path
+
+
+# monitor_tcprelay_proc
+tcprelay_proc_num=$((`ps -ef | grep "tcprelay --portoffset 10000 873 23" | wc -l`-1))
+echo tcprelay_proc_num=$tcprelay_proc_num
+
+if [[ $tcprelay_proc_num > 0 ]];then 
+	echo "Tcprelay process is running..."; 
+else 
+	echo "Start running tcprelay"; 
+	# start_tcprelay_cmd
+	./tcprelay --portoffset 10000 873 23 & 
+	sleep 1
+fi
+
+exp_cmd="""
+spawn ./telnet localhost 10023
+set timeout 240
+expect -re \"Escape character\" { sleep 1; send \"\n\" }
+expect -re \"login:\" { send \"\nroot\n\" }
+expect -re \"assword:\" { send \"alpine\n\" }
+expect -re \"root#\" { send \"defaults write com.apple.sysdiagnose factoryDisable -bool FALSE\n\" }
+expect -re \"root#\" { send \"sysdiagnose\n\" }
+expect -re \"Press \'Enter\' to continue\" { send \"\r\n\" }
+expect -re \"sysdiagnose error\" { exit 1 }
+expect -re \"tar.gz\" { send_user \"SysdiagnoseFinish\" }
+"""
+
+#expect -re \"root#\" { send \"defaults write com.apple.sysdiagnose factoryDisable -bool FALSE\n\" }
+#echo DEBUG:exp_cmd=$exp_cmd
+# /private/var/mobile/Library/Logs/CrashReporter/DiagnosticLogs/sysdiagnose/
+#expect -c "$exp_cmd"
+#sysdiagnose error: sysdiagnose already in flight
+
+exp_cmd_str=`expect -c "$exp_cmd"`
+sysdiagnose_log_path=`echo $exp_cmd_str | grep tar.gz | awk -F ' at ' '{print $2}'`
+
+# DEBUG ECHO
+echo "1>> sysdiagnose_log_path=[$sysdiagnose_log_path]"
+
+sysdiagnose_log_path=${sysdiagnose_log_path/\'./}
+# DEBUG ECHO
+echo "2>> sysdiagnose_log_path=[$sysdiagnose_log_path]"
+
+sysdiagnose_log_path=${sysdiagnose_log_path/\'/}
+# DEBUG ECHO
+echo "3>> sysdiagnose_log_path=[$sysdiagnose_log_path]"
+
+#start
+
+# sysdiagnose_log_path
+echo $sysdiagnose_log_path
+
+location_id=`python panictools.py getLocIDAndMode | awk -F ', ' '{print $2}' | cut -c 2-11 | awk '$1=$1' `
+if [[ $location_id != "" ]];then
+        mkdir logs/ ;
+        copyUnrestricted -u $location_id -s $sysdiagnose_log_path -t logs/ &>$log_path;
+	open logs/
+else
+        echo "ERROR: Get locationid failed"
+fi
+
+
+echo "Finish!"
