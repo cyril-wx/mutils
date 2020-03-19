@@ -1,0 +1,111 @@
+#!/bin/bash
+
+#====================================
+# Descript: Collect Unit Burnin Logs
+# Usage: ./run_burnin_cmd (no need args)
+# Create: 2020-03-18
+# Author: Cyril
+# Copyright: FX-CoreOS
+#====================================
+echo "=== UsageTips: Please using only one Kanzi-cable plugged in station. ==="
+
+probeName=$1
+log_path="./run_burnin_cmd.log"
+
+showResult() {
+	stage_num=$1
+	exec_stat=$2
+
+	if(($exec_stat==0));then
+		echo "[Stage $stage_num] Done"
+	else
+		echo "[Stage $stage_num] Fail"
+		exit 9
+	fi
+}
+
+if((`python panictools.py getLocIDAndMode | grep iOS &>$log_path; echo $?`==0));then 
+	echo "[Stage 1] Unit under iOS mode, skip reboot unit."
+	goto ios_tag
+else
+	echo "[Stage 1] Rebooting unit..."
+	astrisctl reset
+	sleep 3
+	showResult 1 $?
+
+echo "[Stage 2] Waiting entering to Recovery..."
+iboot_cmd_1="""
+set timeout 30
+spawn nanokdp -d /dev/cu.kanzi-$probeName -L $log_path
+expect -re \"Use Ctrl\" { send \"\r\n\" ; sleep 2; send \"\r\n\" ; set timeout 30} 
+expect -re \"nvme_init_controller DONE\" { send \"\r\n\r\n\" ; set timeout 10} 
+expect -re \"]\" { send \"printenv\r\n\" ;}
+expect eof
+"""
+env_str=`expect -c "$iboot_cmd_1"`
+if ((`echo "${env_str}" | grep boot-args &>$log_path; echo $?`!=0));then
+        echo "ERROR: Not found boot-args in unit, setting boot-args failure. exit."
+	showResult 2 1
+else
+	showResult 2 0
+fi
+
+
+echo "[Stage 3] Delete Burnin Boot-args and goto OS mode..."
+b_args=`echo "${env_str}" | grep boot-args | awk -F ' = ' '{print $2}'`
+echo "origin_boot-args=$b_args"
+no_burnin_args=${b_args/astro=factory\/burnin/}
+no_burnin_args=${no_burnin_args/\"/}
+no_burnin_args=${no_burnin_args/\"/}
+echo "new_boot_args=$no_burnin_args"
+
+iboot_cmd_2="""
+set timeout 5
+spawn nanokdp -d /dev/cu.kanzi-$probeName -L $log_path
+expect -re \"Use Ctrl\" { send \"\r\n\" ; sleep 1; send \"\r\n\";  }
+expect -re \"]\" { send \"setenv boot-args ${no_burnin_args} \r\n\" }
+expect -re \"]\" { send \"setenv auto-boot true \r\n\" }
+expect -re \"]\" { send \"saveenv\r\n\" }
+expect -re \"]\" { send \"fsboot\r\n\" }
+expect eof
+"""
+if((`expect -c "$iboot_cmd_2" &>$log_path ; echo $?;`==0));then
+        echo "Delete burnin boot-args successful, goto iOS mode"
+	showResult 3 0
+else
+        showResult 3 1
+fi
+
+echo "[Stage 4] Waitting entering to iOS..."
+echo `python panictools.py getLocIDAndMode` | grep iOS
+while(($?!=0))
+do
+        sleep 1
+        echo `python panictools.py getLocIDAndMode` | grep iOS
+done
+showResult 4 $?
+
+# GOTO it if unit under iOS mode
+fi
+
+echo "[Stage 5] Collecting Burnin Logs..."
+location_id=`python panictools.py getLocIDAndMode | awk -F ', ' '{print $2}' | cut -c 2-11 | awk '$1=$1' `
+if [[ $location_id != "" ]];then
+	mkdir logs/ ;
+	copyUnrestricted -u $location_id -s /private/var/logs/Astro -t burnin_logs/ &>$log_path;
+	zip -r logs/Astro.zip logs/Astro &>$log_path;	
+	showResult 5 $?
+else
+	echo "ERROR: Get locationid failed"
+	showResult 5 1
+fi
+
+
+echo "[Stage 6] Collect Burnin Logs Finish..."
+open logs/
+showResult 6 $?
+
+echo "Finish!"
+
+
+
