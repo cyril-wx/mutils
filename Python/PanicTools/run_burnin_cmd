@@ -2,7 +2,7 @@
 
 #====================================
 # Descript: Collect Unit Burnin Logs
-# Usage: ./run_burnin_cmd (no need args)
+# Usage: ./run_burnin_cmd #Kanzi-CableName#
 # Create: 2020-03-18
 # Author: Cyril
 # Copyright: FX-CoreOS
@@ -71,7 +71,7 @@ expect eof
 """
 if((`expect -c "$iboot_cmd_2" &>$log_path ; echo $?;`==0));then
         echo "Delete burnin boot-args successful, goto iOS mode"
-	showResult 3 0
+		showResult 3 0
 else
         showResult 3 1
 fi
