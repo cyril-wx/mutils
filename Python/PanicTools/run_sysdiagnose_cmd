@@ -28,12 +28,12 @@ if [[ $tcprelay_proc_num > 0 ]];then
 else 
 	echo "Start running tcprelay"; 
 	# start_tcprelay_cmd
-	./tcprelay --portoffset 10000 873 23 & 
+	tcprelay --portoffset 10000 873 23 & 
 	sleep 1
 fi
 
 exp_cmd="""
-spawn ./telnet localhost 10023
+spawn telnet localhost 10023
 set timeout 240
 expect -re \"Escape character\" { sleep 1; send \"\n\" }
 expect -re \"login:\" { send \"\nroot\n\" }
@@ -74,7 +74,7 @@ location_id=`python panictools.py getLocIDAndMode | awk -F ', ' '{print $2}' | c
 if [[ $location_id != "" ]];then
         mkdir logs/ ;
         copyUnrestricted -u $location_id -s $sysdiagnose_log_path -t logs/ &>$log_path;
-	open logs/
+		open logs/
 else
         echo "ERROR: Get locationid failed"
 fi
