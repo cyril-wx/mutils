@@ -18,25 +18,25 @@ tcprelay_log_path="./tcprelay.log"
 script_log_path="./panictools-auto_login_os.log"
 
 #force_kill_tcprelay_cmd
-ps -ef | grep tcprelay | grep -v "grep" | awk -F ' ' '{print $2}' | xargs kill -9 &>$script_log_path
-
+# kill the "no ssh port tcprelay process" and then restart tcprelay process with ssh.
+ps -ef | grep tcprelay | grep -v "grep" |grep -v ssh | awk -F ' ' '{print $2}' | xargs kill -9 &>$script_log_path
 
 # monitor_tcprelay_proc
-tcprelay_proc_num=$((`ps -ef | grep tcprelay | wc -l`-1))
+tcprelay_proc_num=$((`ps -ef | grep "tcprelay --portoffset 10000 873 23 ssh" | grep -v "grep" | wc -l`))
 echo tcprelay_proc_num=$tcprelay_proc_num
 
 if [[ $tcprelay_proc_num > 0 ]];then 
 	echo "Tcprelay process is running..."; 
 else 
-	echo "Start running tcprelay"; 
+	echo "Start running a new tcprelay process..."; 
 	
 	#start_tcprelay_cmd
-	tcprelay --portoffset 10000 873 23 & 
+	tcprelay --portoffset 10000 873 23 ssh scp & 
 	sleep 1
 fi
 
 exp_cmd="""
-spawn telnet localhost 10023
+spawn ./telnet localhost 10023
 expect -re \"Escape character\" { sleep 1; send \"\n\" }
 expect -re \"login:\" { send \"\nroot\n\" }
 expect -re \"assword:\" { send \"alpine\n\" }
@@ -46,12 +46,21 @@ expect eof
 """
 
 exp_cmd2="""
-spawn telnet localhost 10023
+spawn ./telnet localhost 10023
 expect -re \"Escape character\" { sleep 1; send \"\n\" }
 expect -re \"login:\" { send \"\nroot\n\" }
 expect -re \"assword:\" { send \"alpine\n\" }
 interact
 """
 
-expect -c "$exp_cmd2"
+exp_cmd_ssh="""
+spawn ssh -p 10022 root@localhost
+expect {
+	-re \"Are you sure you want to continue connecting (yes\/no)?\" { send \"yes\n\" ; exp_continue }
+	-re \"password:\" { send \"alpine\n\" }
+}
+interact
+"""
+
+expect -c "$exp_cmd_ssh" 
 echo $?
