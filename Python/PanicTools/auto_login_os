@@ -15,7 +15,8 @@
 
 
 tcprelay_log_path="./tcprelay.log"
-script_log_path="./panictools-auto_login_os.log"
+script_log_path="./auto_login_os.log"
+echo "" > $script_log_path
 
 #force_kill_tcprelay_cmd
 # kill the "no ssh port tcprelay process" and then restart tcprelay process with ssh.
@@ -54,7 +55,7 @@ interact
 """
 
 exp_cmd_ssh="""
-spawn ssh -p 10022 root@localhost
+spawn ssh -p 10022 root@localhost -E script_log_path
 expect {
 	-re \"Are you sure you want to continue connecting (yes\/no)?\" { send \"yes\n\" ; exp_continue }
 	-re \"password:\" { send \"alpine\n\" }
@@ -62,5 +63,5 @@ expect {
 interact
 """
 
-expect -c "$exp_cmd_ssh" 
+expect -c "$exp_cmd_ssh"  
 echo $?
