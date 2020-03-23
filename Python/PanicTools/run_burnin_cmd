@@ -11,6 +11,7 @@ echo "=== UsageTips: Please using only one Kanzi-cable plugged in station. ==="
 
 probeName=$1
 log_path="./run_burnin_cmd.log"
+echo "" > $log_path
 
 showResult() {
 	stage_num=$1
