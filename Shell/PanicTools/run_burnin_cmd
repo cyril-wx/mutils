@@ -96,7 +96,7 @@ for i in range(len(info_arr)):
 }
 
 showStart 0 "Checking if connected 1x kanzi-probe"
-probeNum=`getLocIDAndMode | wc -l`
+probeNum=`astrisctl list | grep KanziSWD | wc -l`
 if(($probeNum==1));then
         echo "Checking 1x probe connected, continue"
 	showResult 0 0
