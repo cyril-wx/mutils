@@ -1,0 +1,131 @@
+#!/bin/bash
+
+#******************************************************************************
+# This script is used for collect unit sysdiagnose log under os mode
+#------------------------------------------------------------------------------
+# @Author: Cyril
+# @Create: 2020-03-18
+# @Tips: 1. To using this script, please closing nanokdp/nanocom terminal first.
+#       2. Please using kanzi-cable
+#       3. Only one unit could be plugged in station
+# @Usage: $ ./run_iboot_cmd.sh $probeName (such as:30F014)
+# @Copyright: FX-CoreOS
+#******************************************************************************
+
+echo "=== UsageTips: Please using only one Kanzi-cable plugged in station. ==="
+
+mkdir -p /tmp/panictools &> /dev/null
+tcprelay_log_path="/tmp/panictools/tcprelay.log"
+log_path="/tmp/panictools/run_sysdiagnose_cmd.log"
+echo "" > $log_path
+
+# Show stage start string
+showStart() {
+        stage_num=$1
+        stage_string=$2
+        
+        echo -e "\033[34;47;1m[Stage $stage_num]\033[34;47;0m $stage_string."
+}
+
+# Show stage result string by format
+# Need two arguments: stage number and exec_status number
+showResult() {
+        stage_num=$1
+        exec_stat=$2
+        
+        if(($exec_stat==0));then
+        #       echo -e "\033[49;34;1m[Stage $stage_num]\033[49;34;0m \033[49;32;1mDone\033[49;32;0m"
+                echo -e "\033[49;32;1mDone\033[49;32;0m"
+                return 0
+        else    
+		echo -e "\033[31;49;1mFail\033[31;49;0m"
+                exit 9
+        fi
+}
+
+showStart 1 "Start tcprelay process"
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Stage 1
+#force_kill_tcprelay_cmd
+ps -ef | grep tcprelay | grep -v "grep" |grep -v "ssh scp" | awk -F ' ' '{print $2}' | xargs kill -9 >>$log_path
+
+# monitor_tcprelay_proc
+tcprelay_proc_num=$((`ps -ef | grep "tcprelay --portoffset 10000 873 23" | wc -l`-1))
+echo tcprelay_proc_num=$tcprelay_proc_num >> $log_path
+
+if [[ $tcprelay_proc_num > 0 ]];then 
+	echo "Tcprelay process is already running..."; 
+else 
+	echo "Start running a new tcprelay process"; 
+	# start_tcprelay_cmd
+	tcprelay --portoffset 10000 873 23 ssh scp & 
+	showResult 1 $?
+fi
+
+showResult 1 0
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Stage 1
+
+showStart 2 "Remoting and running sysdiagnose..."
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Stage 2
+exp_cmd="""
+spawn ./telnet localhost 10023
+set timeout 240
+expect -re \"Escape character\" { sleep 1; send \"\n\" }
+expect -re \"login:\" { send \"\nroot\n\" }
+expect -re \"assword:\" { send \"alpine\n\" }
+expect -re \"root#\" { send \"defaults write com.apple.sysdiagnose factoryDisable -bool FALSE\n\" }
+expect -re \"root#\" { send \"sysdiagnose\n\" }
+expect -re \"Press \'Enter\' to continue\" { send \"\r\n\" }
+expect {
+	-re \"tar.gz\" { exp_continue }
+	-re \"root#\" { send \"exit\n\" }
+	eof { exit 0 }
+}
+expect eof
+"""
+# /private/var/mobile/Library/Logs/CrashReporter/DiagnosticLogs/sysdiagnose/
+#sysdiagnose error: sysdiagnose already in flight
+
+expect -c "${exp_cmd}" >>$log_path
+#echo $exp_cmd_str >>$log_path
+
+## Shell 没办法提取完整路径，用python替代
+py_cmd="""
+import re
+data=\"\"
+with open(\"$log_path\", \"r\") as f:
+	data=f.read()
+try:
+	print (re.search(r\"/var(.*)tar.gz\", data).group())
+except:
+	print \"\"
+	exit (1)
+"""
+python -c "$py_cmd"
+sysdiagnose_log_path=`python -c "$py_cmd"`
+if(($?==0)) && ((`echo $sysdiagnose_log_path | grep tar.gz | wc -l`==1));then
+	echo "PASS: Running Sysdiagnose successful."
+	echo "Sysdiagnose path from unit: $sysdiagnose_log_path"
+	showResult 2 0
+else
+	echo "ERROR: Get Sysdiagnose failure."
+	showResult 2 1
+fi
+
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Stage 2
+
+
+showStart 3 "Copying sysdiagnose from unit"
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Stage 3
+location_id=`python panictools.py getLocIDAndMode | awk -F ', ' '{print $2}' | cut -c 2-11 | awk '$1=$1' `
+if [[ $location_id != "" ]];then
+        mkdir logs/ ;
+        copyUnrestricted -u $location_id -s $sysdiagnose_log_path -t logs/ >>$log_path;
+#	scp -r root@localhost://$sysdiagnose_log_path logs/ >>$log_path;
+	showResult 3 $?
+else
+        echo "ERROR: Get locationid failed"
+	showResult 3 1
+fi
+
+open logs/
+echo -e "\033[49;30;1mFinish!\033[49;30;0m"
