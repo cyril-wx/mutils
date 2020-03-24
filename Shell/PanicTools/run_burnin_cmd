@@ -97,9 +97,12 @@ for i in range(len(info_arr)):
 
 showStart 0 "Checking if connected 1x kanzi-probe"
 probeNum=`astrisctl list | grep KanziSWD | wc -l`
+probeName=`astrisctl list | grep KanziSWD- `
 if(($probeNum==1));then
         echo "Checking 1x probe connected, continue"
-	showResult 0 0
+	astrisctl --force-kick --host localhost:$probeName kis 0 &>/dev/null 
+	# set kis=0 
+	if(($?==0));then showResult 0 0; else echo "Setting kis=0 failure"; showResult 0 1; fi;
 else
         echo "Checking fail, probe_num=[$probeNum]. exit"
 	showResult 0 1
