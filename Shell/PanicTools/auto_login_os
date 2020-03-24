@@ -1,0 +1,70 @@
+#!/bin/bash
+
+#******************************************************************************
+# This script is used for auto login into unit under os mode
+#------------------------------------------------------------------------------
+# @Author: Cyril
+# @Create: 2020-03-18
+# @Tips: 1. To using this script, please closing nanokdp/nanocom terminal first.
+#       2. Please using kanzi-cable
+#       3. Only one unit could be plugged in station
+#	4. make sure unit under OS mode
+# @Usage: $ ./auto_login_os.sh
+# @Copyright: FX-CoreOS
+# @Update: 2020-03-24
+#	1. it based on ssh, so not need telnet
+#******************************************************************************
+
+mkdir -p /tmp/panictools/ &>/dev/null
+tcprelay_log_path="/tmp/panictools/tcprelay.log"
+script_log_path="/tmp/panictools/auto_login_os.log"
+echo "" > $script_log_path
+
+#force_kill_tcprelay_cmd
+# kill the "no ssh port tcprelay process" and then restart tcprelay process with ssh.
+ps -ef | grep tcprelay | grep -v "grep" |grep -v ssh | awk -F ' ' '{print $2}' | xargs kill -9 >>$script_log_path
+
+# monitor_tcprelay_proc
+tcprelay_proc_num=$((`ps -ef | grep "tcprelay --portoffset 10000 873 23 ssh" | grep -v "grep" | wc -l`))
+echo tcprelay_proc_num=$tcprelay_proc_num >> $script_log_path
+
+if [[ $tcprelay_proc_num > 0 ]];then 
+	echo "Tcprelay process is running..."; 
+else 
+	echo "Start running a new tcprelay process..."; 
+	
+	#start_tcprelay_cmd
+	tcprelay --portoffset 10000 873 23 ssh scp & 
+	sleep 1
+fi
+
+exp_cmd="""
+spawn ./telnet localhost 10023
+expect -re \"Escape character\" { sleep 1; send \"\n\" }
+expect -re \"login:\" { send \"\nroot\n\" }
+expect -re \"assword:\" { send \"alpine\n\" }
+expect -re \"root#\" { send \"$os_cmd\n\" }
+expect -re \"root#\" { send \"exit\n\" }
+expect eof
+"""
+
+exp_cmd2="""
+spawn ./telnet localhost 10023
+expect -re \"Escape character\" { sleep 1; send \"\n\" }
+expect -re \"login:\" { send \"\nroot\n\" }
+expect -re \"assword:\" { send \"alpine\n\" }
+interact
+"""
+
+exp_cmd_ssh="""
+spawn ssh -p 10022 root@localhost -E $script_log_path
+expect {
+	-re \"Are you sure you want to continue connecting (yes\/no)?\" { send \"yes\n\" ; exp_continue }
+	-re \"password:\" { send \"alpine\n\" }
+	eof { exit 1 }
+}
+interact
+"""
+
+expect -c "$exp_cmd_ssh"  
+echo $?
