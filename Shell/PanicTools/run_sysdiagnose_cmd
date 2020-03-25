@@ -43,6 +43,63 @@ showResult() {
         fi
 }
 
+# Get all units locationId and mode(except Diags mode) which have connected to station
+getLocIDAndMode() {
+
+    get_SPUSBData=`/usr/sbin/system_profiler SPUSBDataType | egrep "DCSD USB UART:|Kanzi:|iPhone|Serial Number:*|Location ID:*|Apple Mobile Device*"`
+    get_SPUSBData="$get_SPUSBData"
+
+    py_cmd="""
+import re, commands
+pattern_cable_name = \"Serial Number: ([a-zA-Z0-9]+)\"
+pattern_cable_locid = \"Location ID: ([a-zA-Z0-9]+)\"
+pattern_unitsn_recovery = \"SRNM:\[([a-zA-Z0-9]+)\]\"
+
+status, info_arr = commands.getstatusoutput('/usr/sbin/system_profiler SPUSBDataType | egrep \"DCSD USB UART:|Kanzi:|iPhone|Serial Number:*|Location ID:*|Apple Mobile Device*\"')
+
+info_arr = info_arr.split(\"\n\")
+for i in range(len(info_arr)):
+	a = (
+		re.search(\"iPhone:\", info_arr[i]),		  # OS mode
+		re.search(\"Apple Mobile Device \(Recovery Mode\):\", info_arr[i]), # Recovery mode
+		re.search(\"Apple Mobile Device \(DFU Mode\):\", info_arr[i]))	  # DFU mode
+
+	if a[0] or a[1] or a[2]:
+		if a[0]:
+			mode = \"iOS\"
+		elif a[1]:
+			mode = \"Recovery\"
+		elif a[2]:
+			mode = \"DFU\"
+		else:
+			pass
+
+		try:
+			cable_name = re.search(pattern_cable_name, info_arr[i - 2]).group().split(\":\")[1].strip()
+			loc_id = re.search(pattern_cable_locid, info_arr[i + 2]).group().split(\":\")[1].strip()
+			print(\"getLocIDAndMode: ProbeName={} LocationId={} Mode={}\".format(cable_name, loc_id, mode))
+		except Exception as e:
+			print(e)
+			exit(1)
+		else:
+			if a[2]:	# Recovery模式下读取SN
+				g = re.search(pattern_unitsn_recovery, info_arr[i + 1])
+				if g:
+					unit_sn = g.group()[6:-1]
+					print(\"UnitSN={}\".format(unit_sn))
+			exit(0)
+"""
+
+	res=`python -c "$py_cmd"`
+	if ((`echo $res | grep getLocIDAndMode >>/dev/null ; echo $?`==0));then
+		echo $res;
+		return 0
+	else
+		return 1
+	fi
+}
+
+
 showStart 1 "Start tcprelay process"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Stage 1
 #force_kill_tcprelay_cmd
@@ -116,7 +173,7 @@ fi
 
 showStart 3 "Copying sysdiagnose from unit"
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Stage 3
-location_id=`python panictools.py getLocIDAndMode | awk -F ', ' '{print $2}' | cut -c 2-11 | awk '$1=$1' `
+location_id=`getLocIDAndMode | grep LocationId | awk -F ' ' '{print $3}' | awk -F '=' '{print $2}'`
 if [[ $location_id != "" ]];then
         mkdir logs/ ;
         copyUnrestricted -u $location_id -s $sysdiagnose_log_path -t logs/ >>$log_path;
