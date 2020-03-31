@@ -11,8 +11,13 @@
 # @Usage: $ ./run_iboot_cmd.sh $probeName (such as:30F014)
 # @Copyright: FX-CoreOS
 #******************************************************************************
+#echo "|----------------------------------------------------------------------|"
 
-echo "=== UsageTips: Please using only one Kanzi-cable plugged in station. ==="
+echo -e "\033[46;34m#======================================================================#\033[0m"
+echo -e "\033[46;34m| ------------------------- PanicTools V1.0 -------------------------- |\033[0m"
+echo -e "\033[46;34m| ScriptName: ./run_sysdiagnose_cmd                                    |\033[0m"
+echo -e "\033[46;34m| UsageTips: Please using only one Kanzi-cable plugged in station.     |\033[0m"
+echo -e "\033[46;34m#======================================================================#\033[0m"
 
 mkdir -p /tmp/panictools &> /dev/null
 tcprelay_log_path="/tmp/panictools/tcprelay.log"
@@ -164,7 +169,7 @@ if(($?==0)) && ((`echo $sysdiagnose_log_path | grep tar.gz | wc -l`==1));then
 	echo "Sysdiagnose path from unit: $sysdiagnose_log_path"
 	showResult 2 0
 else
-	echo "ERROR: Get Sysdiagnose failure."
+	echo -e "ERROR: Get Sysdiagnose \033[31;49;1mfailed\033[31;49;0m."
 	showResult 2 1
 fi
 
@@ -180,9 +185,12 @@ if [[ $location_id != "" ]];then
 #	scp -r root@localhost://$sysdiagnose_log_path logs/ >>$log_path;
 	showResult 3 $?
 else
-        echo "ERROR: Get locationid failed"
+        echo -e "ERROR: Get locationid \033[31;49;1mfailed\033[31;49;0m."
 	showResult 3 1
 fi
 
+showStart 4 "Opening logs folder.."
 open logs/
+showResult 4 $?
+
 echo -e "\033[49;30;1mFinish!\033[49;30;0m"
