@@ -15,6 +15,12 @@
 #	1. it based on ssh, so not need telnet
 #******************************************************************************
 
+echo -e "\033[46;34m#======================================================================#\033[0m"
+echo -e "\033[46;34m| ------------------------- PanicTools V1.0 -------------------------- |\033[0m"
+echo -e "\033[46;34m| ScriptName: ./auto_login_os                                          |\033[0m"
+echo -e "\033[46;34m| UsageTips: Make sure that unit is under os mode .                    |\033[0m"
+echo -e "\033[46;34m#======================================================================#\033[0m"
+
 mkdir -p /tmp/panictools/ &>/dev/null
 tcprelay_log_path="/tmp/panictools/tcprelay.log"
 script_log_path="/tmp/panictools/auto_login_os.log"
