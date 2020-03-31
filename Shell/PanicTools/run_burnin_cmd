@@ -9,7 +9,12 @@
 # Update: 2020-03-14
 # 	1. It rely on copyUnrestricted & nanokdp, no need panictools.py
 #====================================
-echo "=== UsageTips: Please using only one Kanzi-cable plugged in station. ==="
+echo -e "\033[46;34m#======================================================================#\033[0m"
+echo -e "\033[46;34m| ------------------------- PanicTools V1.0 -------------------------- |\033[0m"
+echo -e "\033[46;34m| ScriptName: ./run_burnin_cmd                                         |\033[0m"
+echo -e "\033[46;34m| UsageTips: Please using only one Kanzi-cable plugged in station.     |\033[0m"
+echo -e "\033[46;34m| UsageTips: Please closed nanokdp terminal before running this script.|\033[0m"
+echo -e "\033[46;34m#======================================================================#\033[0m"
 
 mkdir -p /tmp/panictools &> /dev/null
 
@@ -102,20 +107,19 @@ if(($probeNum==1));then
         echo "Checking 1x probe connected, continue"
 	astrisctl --force-kick --host localhost:$probeName kis 0 &>/dev/null 
 	# set kis=0 
-	if(($?==0));then showResult 0 0; else echo "Setting kis=0 failure"; showResult 0 1; fi;
+	if(($?==0));then showResult 0 0; else echo -e "Setting kis=0 \033[31;49;1mFail\033[31;49;0m" ; showResult 0 0; fi;
 else
         echo "Checking fail, probe_num=[$probeNum]. exit"
 	showResult 0 1
 fi
 probeName=`getLocIDAndMode | grep getLocIDAndMode | awk -F ' ' '{print $2}' | awk -F '=' '{print $2}'`
 
+showStart 1 "Rebooting unit..."
 if((`getLocIDAndMode | grep iOS >>$log_path; echo $?`==0));then
-	showStart 1 "Unit under iOS mode, skip reboot unit"
-	echo "goto [Stage 5]"
+	echo "Unit under iOS mode, skip rebooting and goto [Stage 5]"
 	showResult 1 0
 	## goto ios_tag
 else
-	showStart 1 "Rebooting unit..."
 	astrisctl reset
 	sleep 3
 	showResult 1 $?
@@ -131,7 +135,7 @@ expect eof
 """
 env_str=`expect -c "$iboot_cmd_1"`
 if ((`echo "${env_str}" | grep boot-args >>$log_path; echo $?`!=0));then
-        echo "ERROR: Not found boot-args in unit, setting boot-args failure. exit."
+        echo -e "ERROR: Not found boot-args in unit, setting boot-args \033[31;49;1mfailed\033[31;49;0m exit."
 	showResult 2 1
 else
 	showResult 2 0
@@ -157,7 +161,7 @@ expect -re \"]\" { send \"fsboot\r\n\" }
 expect eof
 """
 if((`expect -c "$iboot_cmd_2" >>$log_path ; echo $?;`==0));then
-        echo "Delete burnin boot-args successful, goto iOS mode"
+        echo "Delete burnin boot-args successful"
 		showResult 3 0
 else
         showResult 3 1
@@ -183,18 +187,18 @@ if [[ $location_id != "" ]];then
 	if(($?==0));then
 		echo "Copy logs from unit successful"
 	else
-		echo "Copy logs from unit failure"
+		echo -e "Copy logs from unit \033[31;49;1mfailed\033[31;49;0m"
 		exit 1
 	fi
 	zip -qr ./logs/Astro.zip ./logs/Astro >>$log_path ;
 	showResult 5 $?
 else
-	echo "ERROR: Get locationid failed" ;
+	echo -e "ERROR: Get locationid \033[31;49;1mfailed\033[31;49;0m" ;
 	showResult 5 1
 fi
 
 
-showStart 6 "Collect Burnin Logs Finish..."
+showStart 6 "Opening logs folder..."
 open logs/
 showResult 6 $?
 
